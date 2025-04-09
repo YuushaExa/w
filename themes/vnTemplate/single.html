@@ -3,11 +3,9 @@
   {{#if image.url}}<img src="{{image.url}}" alt="{{title}}">{{/if}}
   
   <div class="details">
-    {{#if developers.length}}
     <p><strong>Developers:</strong> 
-      {{developers}}{{name}}
+      {{developers.name}}
     </p>
-    {{/if}}
     
     {{#if description}}
     <div class="description">
