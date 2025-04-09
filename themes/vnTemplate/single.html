@@ -5,12 +5,11 @@
   <div class="details">
     <p><strong>Developers:</strong> 
    <h2>Developers</h2>
-  <ul>
-    ${post.developers.map(dev => `
-      <li>${dev.name}</a>
-      </li>
-    `).join('')}
-  </ul>    </p>
+     {{#if developers.length}}
+    <p><strong>Developers:</strong> 
+      {{#each developers}}{{name}}{{#unless @last}}, {{/unless}}{{/each}}
+    </p>
+    {{/if}}</p>
     
     {{#if description}}
     <div class="description">
