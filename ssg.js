@@ -85,16 +85,18 @@ function getNestedValue(obj, path) {
 
 
 // Generate HTML from template and data
-function generateHTML(templateName, data, outputPath) {
-  const template = templates[templateName];
-  const content = renderTemplate(template, data);
+function generateFiles(item, outputPath) {
+  // Generate HTML
+  const template = templates.single;
+  const content = renderTemplate(template, item);
   const fullHTML = renderTemplate(templates.base, { 
-    ...data,
+    ...item,
     content: content 
   });
   
-  fs.writeFileSync(outputPath, fullHTML);
-  console.log(`Generated: ${outputPath}`);
+  fs.writeFileSync(outputPath + '.html', fullHTML);
+  console.log(`Generated HTML: ${outputPath}.html`);
+
   fs.writeFileSync(outputPath + '.json', JSON.stringify(item, null, 2));
   console.log(`Generated JSON: ${outputPath}.json`);
 }
