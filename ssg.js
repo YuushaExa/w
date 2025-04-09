@@ -29,40 +29,33 @@ async function fetchData(url) {
 }
 
 // Enhanced template engine with loops and conditionals
+// Enhanced template engine with better conditionals and loops
 function renderTemplate(template, data) {
   // Handle loops first
   let output = template.replace(/\{\{#each ([^}]+)\}\}([\s\S]+?)\{\{\/each\}\}/g, (match, arrayPath, loopContent) => {
-    const parts = arrayPath.split('.');
-    let array = data;
-    for (const part of parts) {
-      array = array?.[part];
-      if (array === undefined) break;
-    }
-    
+    const array = getNestedValue(data, arrayPath);
     if (!Array.isArray(array)) return '';
     
-    return array.map(item => {
-      return renderTemplate(loopContent, item);
+    return array.map((item, index) => {
+      let itemOutput = loopContent;
+      // Handle @last special variable
+      itemOutput = itemOutput.replace(/\{\{\@last\}\}/g, index === array.length - 1);
+      // Render the item content
+      return renderTemplate(itemOutput, item);
     }).join('');
   });
 
   // Handle conditionals
-  output = output.replace(/\{\{#if ([^}]+)\}\}([\s\S]+?)\{\{\/if\}\}/g, (match, conditionPath, ifContent) => {
-    const parts = conditionPath.split('.');
-    let value = data;
-    for (const part of parts) {
-      value = value?.[part];
-      if (value === undefined) break;
-    }
-    
-    // Check for array length
-    if (conditionPath.endsWith('.length')) {
-      const arrayPath = conditionPath.replace('.length', '');
+  output = output.replace(/\{\{#if ([^}]+)\}\}([\s\S]+?)\{\{\/if\}\}/g, (match, condition, ifContent) => {
+    // Check for .length specifically
+    if (condition.endsWith('.length')) {
+      const arrayPath = condition.replace('.length', '');
       const array = getNestedValue(data, arrayPath);
       return Array.isArray(array) && array.length > 0 ? ifContent : '';
     }
     
-    // Check for truthy value
+    // Regular value check
+    const value = getNestedValue(data, condition);
     return value ? ifContent : '';
   });
 
