@@ -10,16 +10,11 @@ if (!fs.existsSync(config.outputDir)) {
   fs.mkdirSync(config.outputDir, { recursive: true });
 }
 
-// Load templates as template literals
-function loadTemplate(fileName) {
-  const templatePath = path.join('themes', config.template, fileName);
-  return fs.readFileSync(templatePath, 'utf8');
-}
-
+// Load templates
 const templates = {
-  base: loadTemplate('baseof.html'),
-  single: loadTemplate('single.html'),
-  list: loadTemplate('list.html')
+  base: fs.readFileSync(path.join('themes', config.template, 'baseof.html'), 'utf8'),
+  single: fs.readFileSync(path.join('themes', config.template, 'single.html'), 'utf8'),
+  list: fs.readFileSync(path.join('themes', config.template, 'list.html'), 'utf8')
 };
 
 // Fetch data helper
@@ -33,22 +28,34 @@ async function fetchData(url) {
   });
 }
 
-// Render template using literal substitution
+// Safer template rendering
 function renderTemplate(template, data) {
-  return template.replace(/\${([^}]+)}/g, (match, expression) => {
-    try {
-      // Create a function with the expression using the data as context
-      const func = new Function('data', `with(data) { return ${expression} }`);
-      const result = func(data);
-      return result !== undefined ? result : '';
-    } catch (e) {
-      console.warn(`Template error in expression: ${expression}`);
-      return '';
-    }
+  // Handle conditionals and loops first
+  let output = template
+    .replace(/\${if ([^}]+)}([\s\S]+?)\${endif}/g, (match, condition, content) => {
+      const value = getNestedValue(data, condition);
+      return value ? content : '';
+    })
+    .replace(/\${each ([^}]+)}([\s\S]+?)\${endeach}/g, (match, arrayPath, content) => {
+      const array = getNestedValue(data, arrayPath);
+      if (!Array.isArray(array)) return '';
+      return array.map(item => renderTemplate(content, item)).join('');
+    });
+
+  // Then handle simple expressions
+  output = output.replace(/\${([^}]+)}/g, (match, expression) => {
+    return getNestedValue(data, expression) || '';
   });
+
+  return output;
 }
 
-// Generate HTML files
+// Helper to get nested values
+function getNestedValue(obj, path) {
+  return path.split('.').reduce((o, p) => o?.[p], obj);
+}
+
+// Generate HTML
 function generateHTML(templateName, data, outputPath) {
   const template = templates[templateName];
   const content = renderTemplate(template, data);
