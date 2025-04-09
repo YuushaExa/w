@@ -2,14 +2,12 @@
   <h2>{{title}}</h2>
   {{#if image.url}}<img src="{{image.url}}" alt="{{title}}">{{/if}}
   
-  <div class="details">
-    <p><strong>Developers:</strong> 
-   <h2>Developers</h2>
-     {{#if developers.length}}
+<div class="details">
+    {{#if developers.length}}
     <p><strong>Developers:</strong> 
       {{#each developers}}{{name}}{{#unless @last}}, {{/unless}}{{/each}}
     </p>
-    {{/if}}</p>
+    {{/if}}
     
     {{#if description}}
     <div class="description">
