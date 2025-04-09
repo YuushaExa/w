@@ -28,34 +28,71 @@ async function fetchData(url) {
   });
 }
 
-// Simple template engine
+// Enhanced template engine with loops and conditionals
 function renderTemplate(template, data) {
-  let output = template;
-  
-  // Replace simple placeholders like {{title}}
-  for (const [key, value] of Object.entries(data)) {
-    output = output.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value || '');
-  }
-  
-  // Handle nested objects with dot notation (like {{image.url}})
-  output = output.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
-    const parts = path.split('.');
+  // Handle loops first
+  let output = template.replace(/\{\{#each ([^}]+)\}\}([\s\S]+?)\{\{\/each\}\}/g, (match, arrayPath, loopContent) => {
+    const parts = arrayPath.split('.');
+    let array = data;
+    for (const part of parts) {
+      array = array?.[part];
+      if (array === undefined) break;
+    }
+    
+    if (!Array.isArray(array)) return '';
+    
+    return array.map(item => {
+      return renderTemplate(loopContent, item);
+    }).join('');
+  });
+
+  // Handle conditionals
+  output = output.replace(/\{\{#if ([^}]+)\}\}([\s\S]+?)\{\{\/if\}\}/g, (match, conditionPath, ifContent) => {
+    const parts = conditionPath.split('.');
     let value = data;
     for (const part of parts) {
       value = value?.[part];
       if (value === undefined) break;
     }
-    return value || '';
+    
+    // Check for array length
+    if (conditionPath.endsWith('.length')) {
+      const arrayPath = conditionPath.replace('.length', '');
+      const array = getNestedValue(data, arrayPath);
+      return Array.isArray(array) && array.length > 0 ? ifContent : '';
+    }
+    
+    // Check for truthy value
+    return value ? ifContent : '';
   });
-  
+
+  // Replace simple placeholders
+  output = output.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+    return getNestedValue(data, path) || '';
+  });
+
   return output;
+}
+
+// Helper function to get nested values
+function getNestedValue(obj, path) {
+  const parts = path.split('.');
+  let value = obj;
+  for (const part of parts) {
+    value = value?.[part];
+    if (value === undefined) break;
+  }
+  return value;
 }
 
 // Generate HTML from template and data
 function generateHTML(templateName, data, outputPath) {
   const template = templates[templateName];
   const content = renderTemplate(template, data);
-  const fullHTML = renderTemplate(templates.base, { content });
+  const fullHTML = renderTemplate(templates.base, { 
+    ...data,
+    content: content 
+  });
   
   fs.writeFileSync(outputPath, fullHTML);
   console.log(`Generated: ${outputPath}`);
