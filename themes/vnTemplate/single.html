@@ -1,19 +1,19 @@
 <article class="item">
-  <h2>{{title}}</h2>
-  {{#if image.url}}<img src="{{image.url}}" alt="{{title}}">{{/if}}
+  <h2>${title}</h2>
+  ${image?.url ? `<img src="${image.url}" alt="${title}">` : ''}
   
   <div class="details">
-    {{#if developers.length}}
+    ${developers?.length ? `
     <p><strong>Developers:</strong> 
-      {{#each developers}}{{name}}{{#unless @last}}, {{/unless}}{{/each}}
+      ${developers.map(d => d.name).join(', ')}
     </p>
-    {{/if}}
+    ` : ''}
     
-    {{#if description}}
+    ${description ? `
     <div class="description">
       <h3>Description</h3>
-      <p>{{description}}</p>
+      <p>${description}</p>
     </div>
-    {{/if}}
+    ` : ''}
   </div>
 </article>
