@@ -29,7 +29,6 @@ async function fetchData(url) {
 }
 
 // Enhanced template engine with loops and conditionals
-// Enhanced template engine with better conditionals and loops
 function renderTemplate(template, data) {
   // Handle loops first
   let output = template.replace(/\{\{#each ([^}]+)\}\}([\s\S]+?)\{\{\/each\}\}/g, (match, arrayPath, loopContent) => {
@@ -37,32 +36,36 @@ function renderTemplate(template, data) {
     if (!Array.isArray(array)) return '';
     
     return array.map((item, index) => {
-      let itemOutput = loopContent;
-      // Handle @last special variable
-      itemOutput = itemOutput.replace(/\{\{\@last\}\}/g, index === array.length - 1);
-      // Render the item content
-      return renderTemplate(itemOutput, item);
+      // Create a new context with the current item and special variables
+      const context = {
+        ...item,
+        '@index': index,
+        '@first': index === 0,
+        '@last': index === array.length - 1,
+        '@root': data // Provide access to root data
+      };
+      
+      // Render the item content with the new context
+      return renderTemplate(loopContent, context);
     }).join('');
   });
 
   // Handle conditionals
-// In renderTemplate function, replace the condition handling with:
-output = output.replace(/\{\{#if ([^}]+)\}\}([\s\S]+?)\{\{\/if\}\}/g, (match, condition, ifContent) => {
-  const value = getNestedValue(data, condition);
-  
-  // Handle array length checks
-  if (condition.endsWith('.length')) {
-    const arrayPath = condition.replace('.length', '');
-    const array = getNestedValue(data, arrayPath);
-    return Array.isArray(array) && array.length > 0 ? ifContent : '';
-  }
-  
-  // Handle empty arrays
-  if (Array.isArray(value)) return value.length > 0 ? ifContent : '';
-  
-  // Regular truthy check
-  return value ? ifContent : '';
-});
+  output = output.replace(/\{\{#if ([^}]+)\}\}([\s\S]+?)\{\{\/if\}\}/g, (match, condition, ifContent) => {
+    const value = getNestedValue(data, condition);
+    
+    // Handle array checks
+    if (Array.isArray(value)) return value.length > 0 ? renderTemplate(ifContent, data) : '';
+    
+    // Regular truthy check
+    return value ? renderTemplate(ifContent, data) : '';
+  });
+
+  // Handle unless conditionals
+  output = output.replace(/\{\{#unless ([^}]+)\}\}([\s\S]+?)\{\{\/unless\}\}/g, (match, condition, unlessContent) => {
+    const value = getNestedValue(data, condition);
+    return !value ? renderTemplate(unlessContent, data) : '';
+  });
 
   // Replace simple placeholders
   output = output.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
