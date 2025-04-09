@@ -83,6 +83,10 @@ function getNestedValue(obj, path) {
   return value;
 }
 
+function joinFilter(arr, prop, sep = ', ') {
+  return Array.isArray(arr) ? arr.map(i => i[prop]).join(sep) : '';
+}
+
 // Generate HTML from template and data
 function generateHTML(templateName, data, outputPath) {
   const template = templates[templateName];
