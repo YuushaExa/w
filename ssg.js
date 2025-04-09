@@ -44,6 +44,13 @@ function renderTemplate(template, data) {
       return renderTemplate(itemOutput, item);
     }).join('');
   });
+
+  // Handle conditionals
+// In renderTemplate function, replace the condition handling with:
+output = output.replace(/\{\{#if ([^}]+)\}\}([\s\S]+?)\{\{\/if\}\}/g, (match, condition, ifContent) => {
+  const value = getNestedValue(data, condition);
+  
+  // Handle array checks
 if (condition.endsWith('.length')) {
   const arrayPath = condition.replace('.length', '');
   const array = getNestedValue(data, arrayPath);
@@ -54,15 +61,6 @@ if (condition.endsWith('.length')) {
   console.log(`  - Should render content? ${shouldRender}`);
   return shouldRender ? ifContent : '';
 }
-  // Handle conditionals
-// In renderTemplate function, replace the condition handling with:
-output = output.replace(/\{\{#if ([^}]+)\}\}([\s\S]+?)\{\{\/if\}\}/g, (match, condition, ifContent) => {
-  const value = getNestedValue(data, condition);
-  
-  // Handle array checks
-  if (Array.isArray(value)) {
-    return value.length > 0 ? ifContent : '';
-  }
   
   // Handle other falsy values
   return value ? ifContent : '';
