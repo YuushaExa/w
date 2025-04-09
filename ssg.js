@@ -95,12 +95,13 @@ function generateHTML(templateName, data, outputPath) {
   
   fs.writeFileSync(outputPath, fullHTML);
   console.log(`Generated: ${outputPath}`);
+  fs.writeFileSync(outputPath + '.json', JSON.stringify(item, null, 2));
+  console.log(`Generated JSON: ${outputPath}.json`);
 }
 
-// Main generation function
+// Update your main generation function
 async function generateSite() {
   try {
-    // Load all data sources
     const allItems = [];
     
     for (const dataUrl of config.data) {
@@ -112,21 +113,21 @@ async function generateSite() {
       }
     }
     
-    // Generate individual pages
+    // Generate individual files
     for (const item of allItems) {
-      const outputPath = path.join(config.outputDir, `${item.id}.html`);
-      generateHTML('single', item, outputPath);
+      const outputBasePath = path.join(config.outputDir, item.id);
+      generateFiles(item, outputBasePath);
     }
     
-    // Generate list page
-    const listOutputPath = path.join(config.outputDir, 'index.html');
-    generateHTML('list', { items: allItems }, listOutputPath);
+    // Generate list files
+    const listOutputPath = path.join(config.outputDir, 'index');
+    generateHTML('list', { items: allItems }, listOutputPath + '.html');
+    fs.writeFileSync(listOutputPath + '.json', JSON.stringify(allItems, null, 2));
     
     console.log('Site generation complete!');
   } catch (error) {
     console.error('Error generating site:', error);
   }
 }
-
 // Run the generator
 generateSite();
