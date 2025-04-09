@@ -46,18 +46,18 @@ function renderTemplate(template, data) {
   });
 
   // Handle conditionals
-  output = output.replace(/\{\{#if ([^}]+)\}\}([\s\S]+?)\{\{\/if\}\}/g, (match, condition, ifContent) => {
-    // Check for .length specifically
-    if (condition.endsWith('.length')) {
-      const arrayPath = condition.replace('.length', '');
-      const array = getNestedValue(data, arrayPath);
-      return Array.isArray(array) && array.length > 0 ? ifContent : '';
-    }
-    
-    // Regular value check
-    const value = getNestedValue(data, condition);
-    return value ? ifContent : '';
-  });
+output = output.replace(/\{\{#if ([^}]+)\}\}([\s\S]+?)\{\{\/if\}\}/g, (match, condition, ifContent) => {
+  // Special handling for .length checks
+  if (condition.endsWith('.length')) {
+    const path = condition.replace('.length', '');
+    const value = getNestedValue(data, path);
+    return Array.isArray(value) && value.length > 0 ? ifContent : '';
+  }
+  
+  // Regular value check
+  const value = getNestedValue(data, condition);
+  return value ? ifContent : '';
+});
 
   // Replace simple placeholders
   output = output.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
