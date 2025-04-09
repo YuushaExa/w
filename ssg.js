@@ -50,19 +50,17 @@ function renderTemplate(template, data) {
 output = output.replace(/\{\{#if ([^}]+)\}\}([\s\S]+?)\{\{\/if\}\}/g, (match, condition, ifContent) => {
   const value = getNestedValue(data, condition);
   
-  // Handle array checks
-if (condition.endsWith('.length')) {
-  const arrayPath = condition.replace('.length', '');
-  const array = getNestedValue(data, arrayPath);
-  console.log(`Checking condition: ${condition} on data:`, data); // Log data context
-  console.log(`  - Found array for ${arrayPath}:`, array);
-  console.log(`  - IsArray: ${Array.isArray(array)}, Length: ${array?.length}`);
-  const shouldRender = Array.isArray(array) && array.length > 0;
-  console.log(`  - Should render content? ${shouldRender}`);
-  return shouldRender ? ifContent : '';
-}
+  // Handle array length checks
+  if (condition.endsWith('.length')) {
+    const arrayPath = condition.replace('.length', '');
+    const array = getNestedValue(data, arrayPath);
+    return Array.isArray(array) && array.length > 0 ? ifContent : '';
+  }
   
-  // Handle other falsy values
+  // Handle empty arrays
+  if (Array.isArray(value)) return value.length > 0 ? ifContent : '';
+  
+  // Regular truthy check
   return value ? ifContent : '';
 });
 
