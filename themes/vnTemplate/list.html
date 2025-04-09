@@ -8,7 +8,7 @@
     </a>       
  {{#if developers.length}}
     <p><strong>Developers:</strong> 
-      {{developers}}{{name}}
+      {{#each developers}}{{name}}{{/each}}
     </p>
     {{/if}}
   </div>
