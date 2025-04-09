@@ -85,25 +85,22 @@ function getNestedValue(obj, path) {
 
 
 // Generate HTML from template and data
-function generateFiles(item, outputPath) {
-  // Generate HTML
-  const template = templates.single;
-  const content = renderTemplate(template, item);
+function generateHTML(templateName, data, outputPath) {
+  const template = templates[templateName];
+  const content = renderTemplate(template, data);
   const fullHTML = renderTemplate(templates.base, { 
-    ...item,
+    ...data,
     content: content 
   });
   
-  fs.writeFileSync(outputPath + '.html', fullHTML);
-  console.log(`Generated HTML: ${outputPath}.html`);
-
-  fs.writeFileSync(outputPath + '.json', JSON.stringify(item, null, 2));
-  console.log(`Generated JSON: ${outputPath}.json`);
+  fs.writeFileSync(outputPath, fullHTML);
+  console.log(`Generated: ${outputPath}`);
 }
 
-// Update your main generation function
+// Main generation function
 async function generateSite() {
   try {
+    // Load all data sources
     const allItems = [];
     
     for (const dataUrl of config.data) {
@@ -115,21 +112,21 @@ async function generateSite() {
       }
     }
     
-    // Generate individual files
+    // Generate individual pages
     for (const item of allItems) {
-      const outputBasePath = path.join(config.outputDir, item.id);
-      generateFiles(item, outputBasePath);
+      const outputPath = path.join(config.outputDir, `${item.id}.html`);
+      generateHTML('single', item, outputPath);
     }
     
-    // Generate list files
-    const listOutputPath = path.join(config.outputDir, 'index');
-    generateFiles('list', { items: allItems }, listOutputPath + '.html');
-    fs.writeFileSync(listOutputPath + '.json', JSON.stringify(allItems, null, 2));
+    // Generate list page
+    const listOutputPath = path.join(config.outputDir, 'index.html');
+    generateHTML('list', { items: allItems }, listOutputPath);
     
     console.log('Site generation complete!');
   } catch (error) {
     console.error('Error generating site:', error);
   }
 }
+
 // Run the generator
 generateSite();
