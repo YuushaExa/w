@@ -6,13 +6,12 @@
       {{#if image.url}}<img src="{{image.url}}" alt="{{title}}">{{/if}}
       <h3>{{title}}</h3>
     </a>
-  {{#if developers}}
-    <p>by 
-      {{#each developers}}
-        {{name}}{{#unless @last}}, {{/unless}}
-      {{/each}}
+    {{#if developers.length}}
+    <p><strong>Developers:</strong> 
+      {{#each developers}}{{name}}{{#unless @last}}, {{/unless}}{{/each}}
     </p>
     {{/if}}
+    
   </div>
   {{/each}}
 </div>
