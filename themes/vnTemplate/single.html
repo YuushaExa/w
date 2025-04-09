@@ -1,19 +1,19 @@
 <article class="item">
   <h2>${title}</h2>
-  ${image?.url ? `<img src="${image.url}" alt="${title}">` : ''}
+  ${if image.url}<img src="${image.url}" alt="${title}">${endif}
   
   <div class="details">
-    ${developers?.length ? `
+    ${if developers.length}
     <p><strong>Developers:</strong> 
-      ${developers.map(d => d.name).join(', ')}
+      ${each developers}${name}${if !@last}, ${endif}${endeach}
     </p>
-    ` : ''}
+    ${endif}
     
-    ${description ? `
+    ${if description}
     <div class="description">
       <h3>Description</h3>
       <p>${description}</p>
     </div>
-    ` : ''}
+    ${endif}
   </div>
 </article>
