@@ -1,16 +1,16 @@
 <h2>Visual Novels</h2>
 <div class="item-list">
-  {{#each items}}
+  ${items.map(item => `
   <div class="item-card">
-    <a href="{{id}}.html">
-      {{#if image.url}}<img src="{{image.url}}" alt="{{title}}">{{/if}}
-      <h3>{{title}}</h3>
-    </a>       
- {{#if developers.length}}
+    <a href="${item.id}.html">
+      ${item.image?.url ? `<img src="${item.image.url}" alt="${item.title}">` : ''}
+      <h3>${item.title}</h3>
+    </a>
+    ${item.developers?.length ? `
     <p><strong>Developers:</strong> 
-      {{#each developers}}{{name}}{{/each}}
+      ${item.developers.map(d => d.name).join(', ')}
     </p>
-    {{/if}}
+    ` : ''}
   </div>
-  {{/each}}
+  `).join('')}
 </div>
