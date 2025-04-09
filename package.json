@@ -1,0 +1,19 @@
+{
+  "name": "github-pages-ssg",
+  "version": "1.0.0",
+  "description": "Node.js SSG for GitHub Pages",
+  "main": "ssg.js",
+  "scripts": {
+    "build": "node ssg.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ssg",
+    "github pages",
+    "node"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+  }
+}
