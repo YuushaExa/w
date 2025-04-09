@@ -46,16 +46,21 @@ function renderTemplate(template, data) {
   });
 
   // Handle conditionals
+// In renderTemplate function, replace the condition handling with:
 output = output.replace(/\{\{#if ([^}]+)\}\}([\s\S]+?)\{\{\/if\}\}/g, (match, condition, ifContent) => {
-  // Special handling for .length checks
+  const value = getNestedValue(data, condition);
+  
+  // Handle array length checks
   if (condition.endsWith('.length')) {
-    const path = condition.replace('.length', '');
-    const value = getNestedValue(data, path);
-    return Array.isArray(value) && value.length > 0 ? ifContent : '';
+    const arrayPath = condition.replace('.length', '');
+    const array = getNestedValue(data, arrayPath);
+    return Array.isArray(array) && array.length > 0 ? ifContent : '';
   }
   
-  // Regular value check
-  const value = getNestedValue(data, condition);
+  // Handle empty arrays
+  if (Array.isArray(value)) return value.length > 0 ? ifContent : '';
+  
+  // Regular truthy check
   return value ? ifContent : '';
 });
 
