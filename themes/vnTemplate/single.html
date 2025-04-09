@@ -1,0 +1,19 @@
+<article class="item">
+  <h2>{{title}}</h2>
+  {{#if image.url}}<img src="{{image.url}}" alt="{{title}}">{{/if}}
+  
+  <div class="details">
+    {{#if developers.length}}
+    <p><strong>Developers:</strong> 
+      {{#each developers}}{{name}}{{#unless @last}}, {{/unless}}{{/each}}
+    </p>
+    {{/if}}
+    
+    {{#if description}}
+    <div class="description">
+      <h3>Description</h3>
+      <p>{{description}}</p>
+    </div>
+    {{/if}}
+  </div>
+</article>
