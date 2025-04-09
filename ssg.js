@@ -95,11 +95,7 @@ function generateHTML(templateName, data, outputPath) {
   fs.writeFileSync(outputPath, fullHTML);
   console.log(`Generated: ${outputPath}`);
 }
-allItems.forEach(item => {
-  if (item.developers) {
-    item.developersNames = item.developers.map(d => d.name).join(', ');
-  }
-});
+
 // Main generation function
 async function generateSite() {
   try {
