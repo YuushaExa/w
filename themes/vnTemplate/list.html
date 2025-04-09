@@ -6,9 +6,9 @@
       {{#if image.url}}<img src="{{image.url}}" alt="{{title}}">{{/if}}
       <h3>{{title}}</h3>
     </a>       
-  {{#if developers.length}}
+ {{#if developers.length}}
     <p><strong>Developers:</strong> 
-      {{developers.length}}
+      {{#each developers}}{{name}}{{#unless @last}}, {{/unless}}{{/each}}
     </p>
     {{/if}}
   </div>
