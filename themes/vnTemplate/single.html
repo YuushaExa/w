@@ -4,8 +4,13 @@
   
   <div class="details">
     <p><strong>Developers:</strong> 
-      {{developers.name}}
-    </p>
+   <h2>Developers</h2>
+  <ul>
+    ${post.developers.map(dev => `
+      <li>${dev.name}</a>
+      </li>
+    `).join('')}
+  </ul>    </p>
     
     {{#if description}}
     <div class="description">
