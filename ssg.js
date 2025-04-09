@@ -78,7 +78,11 @@ function getNestedValue(obj, path) {
   let value = obj;
   for (const part of parts) {
     value = value?.[part];
-    if (value === undefined) break;
+    if (value === undefined) {
+      console.log(`Could not resolve path part '${part}' in '${path}'`);
+      console.log('Current object:', obj);
+      break;
+    }
   }
   return value;
 }
