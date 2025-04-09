@@ -123,7 +123,7 @@ async function generateSite() {
     
     // Generate list files
     const listOutputPath = path.join(config.outputDir, 'index');
-    generateHTML('list', { items: allItems }, listOutputPath + '.html');
+    generateFiles('list', { items: allItems }, listOutputPath + '.html');
     fs.writeFileSync(listOutputPath + '.json', JSON.stringify(allItems, null, 2));
     
     console.log('Site generation complete!');
