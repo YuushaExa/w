@@ -4,5 +4,6 @@
     "https://raw.githubusercontent.com/YuushaExa/merge/refs/heads/main/vn/2.json"
   ],
   "outputDir": "public",
-  "pagination": 10
+  "pagination": 10,
+  "filenamePattern": "list1-{page}.html" 
 }
