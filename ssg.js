@@ -30,8 +30,7 @@ async function fetchData(url) {
 }
 
 // Generate pagination HTML (pure template evaluation)
-function getPaginationHTML(currentPage, totalPages) {
-  const filenamePattern = config.pagination?.filenamePattern || 'list-*.html';
+function getPaginationHTML(currentPage, totalPages, filenamePattern) {
   return new Function(
     'currentPage', 
     'totalPages',
