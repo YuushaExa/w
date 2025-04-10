@@ -3,5 +3,6 @@
   "data": [
     "https://raw.githubusercontent.com/YuushaExa/merge/refs/heads/main/vn/2.json"
   ],
-  "outputDir": "public" 
+  "outputDir": "public",
+  "pagination": 10
 }
