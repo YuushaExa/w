@@ -30,46 +30,47 @@ async function fetchData(url) {
 
 // Enhanced template engine with loops and conditionals
 function renderTemplate(template, data) {
-  // Handle loops first
-  let output = template.replace(/\{\{#each ([^}]+)\}\}([\s\S]+?)\{\{\/each\}\}/g, (match, arrayPath, loopContent) => {
-    const array = getNestedValue(data, arrayPath);
+  // First process loops to establish proper context
+  let output = template.replace(/\{\{#each (\w+)\}\}([\s\S]+?)\{\{\/each\}\}/g, (match, arrayName, loopContent) => {
+    const array = data[arrayName];
     if (!Array.isArray(array)) return '';
     
     return array.map((item, index) => {
-      // Create a new context with the current item and special variables
-      const context = {
+      const itemContext = {
         ...item,
         '@index': index,
         '@first': index === 0,
         '@last': index === array.length - 1,
-        '@root': data // Provide access to root data
+        '@root': data
       };
-      
-      // Render the item content with the new context
-      return renderTemplate(loopContent, context);
+      return renderTemplate(loopContent, itemContext);
     }).join('');
   });
 
-  // Handle conditionals
-  output = output.replace(/\{\{#if ([^}]+)\}\}([\s\S]+?)\{\{\/if\}\}/g, (match, condition, ifContent) => {
-    const value = getNestedValue(data, condition);
-    
-    // Handle array checks
-    if (Array.isArray(value)) return value.length > 0 ? renderTemplate(ifContent, data) : '';
-    
-    // Regular truthy check
+  // Then process conditionals
+  output = output.replace(/\{\{#if (\w+)\}\}([\s\S]+?)\{\{\/if\}\}/g, (match, condition, ifContent) => {
+    const value = data[condition];
+    if (Array.isArray(value)) {
+      return value.length > 0 ? renderTemplate(ifContent, data) : '';
+    }
     return value ? renderTemplate(ifContent, data) : '';
   });
 
-  // Handle unless conditionals
-  output = output.replace(/\{\{#unless ([^}]+)\}\}([\s\S]+?)\{\{\/unless\}\}/g, (match, condition, unlessContent) => {
-    const value = getNestedValue(data, condition);
+  // Process unless conditions
+  output = output.replace(/\{\{#unless (\w+)\}\}([\s\S]+?)\{\{\/unless\}\}/g, (match, condition, unlessContent) => {
+    const value = data[condition];
     return !value ? renderTemplate(unlessContent, data) : '';
   });
 
-  // Replace simple placeholders
-  output = output.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
-    return getNestedValue(data, path) || '';
+  // Finally replace simple variables
+  output = output.replace(/\{\{(\w+)\}\}/g, (match, prop) => {
+    return data[prop] || '';
+  });
+
+  // Handle nested properties (like developer.name)
+  output = output.replace(/\{\{(\w+\.\w+)\}\}/g, (match, path) => {
+    const [parent, child] = path.split('.');
+    return (data[parent] && data[parent][child]) || '';
   });
 
   return output;
