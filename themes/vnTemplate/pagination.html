@@ -1,10 +1,21 @@
+<script>
+function getPagePath(page) {
+  return page === 1 ? 'index.html' : `list-${page}.html`;
+}
+</script>
+
 <div class="pagination">
-  ${Array.from({ length: totalPages }, (_, i) => `
-    <a href="${i === 0 ? 'index.html' : `page${i + 1}.html`}" 
-       class="${currentPage === i + 1 ? 'active' : ''}">
-      ${i + 1}
-    </a>
-  `).join('')}
+  ${currentPage > 1 ? `
+    <a href="${getPagePath(currentPage - 1)}" class="prev">← Previous</a>
+  ` : ''}
+  ${Array.from({ length: totalPages }, (_, i) => {
+    const p = i + 1;
+    return p === currentPage ? `<span class="current">${p}</span>` 
+                           : `<a href="${getPagePath(p)}">${p}</a>`;
+  }).join('')}
+  ${currentPage < totalPages ? `
+    <a href="${getPagePath(currentPage + 1)}" class="next">Next →</a>
+  ` : ''}
 </div>
 
 <style>
