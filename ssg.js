@@ -65,21 +65,22 @@ async function generateSite() {
     }
 
     // Generate paginated list pages
-    if (config.pagination) {
-      const itemsPerPage = config.pagination;
-      const totalPages = Math.ceil(allItems.length / itemsPerPage);
+   // Generate paginated list pages
+if (config.pagination) {
+  const itemsPerPage = config.pagination.itemsPerPage;  // Note: Added .itemsPerPage
+  const totalPages = Math.ceil(allItems.length / itemsPerPage);
+  const filenamePattern = config.pagination.filenamePattern || 'list-*.html';  // Moved this up
 
-      for (let page = 1; page <= totalPages; page++) {
-        const pageItems = allItems.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-        const paginationHTML = getPaginationHTML(page, totalPages, filenamePattern);
-const filenamePattern = config.pagination?.filenamePattern || 'list-*.html';
-const outputPath = path.join(
-  config.outputDir,
-  page === 1 ? 'index.html' : filenamePattern.replace('*', page)
-);
-        generateHTML('list', { items: pageItems }, outputPath, paginationHTML);
-      }
-    } else {
+  for (let page = 1; page <= totalPages; page++) {
+    const pageItems = allItems.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+    const paginationHTML = getPaginationHTML(page, totalPages, filenamePattern);
+    const outputPath = path.join(
+      config.outputDir,
+      page === 1 ? 'index.html' : filenamePattern.replace('*', page)
+    );
+    generateHTML('list', { items: pageItems }, outputPath, paginationHTML);
+  }
+} else {
       // Non-paginated fallback
       generateHTML('list', { items: allItems }, path.join(config.outputDir, 'index.html'));
     }
