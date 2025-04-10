@@ -2,10 +2,12 @@
   <h2>${data.title || 'Untitled'}</h2>
   ${data.image?.url ? `<img src="${data.image.url}" alt="${data.title}">` : ''}
   
-  <div class="details">
+ <div class="details">
     ${data.developers?.length ? `
       <p><strong>Developers:</strong> 
-        ${data.developers.map(dev => dev.name).join(', ')}
+        ${data.developers.map(dev => `
+          <a href="/developers/${dev.name.toLowerCase().replace(/\s+/g, '-')}.html">${dev.name}</a>
+        `).join(', ')}
       </p>
     ` : ''}
     
