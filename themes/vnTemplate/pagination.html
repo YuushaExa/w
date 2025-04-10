@@ -1,20 +1,18 @@
-<script>
-function getPagePath(page) {
-  return page === 1 ? 'index.html' : `list-${page}.html`;
-}
-</script>
-
 <div class="pagination">
   ${currentPage > 1 ? `
-    <a href="${getPagePath(currentPage - 1)}" class="prev">← Previous</a>
+    <a href="${currentPage === 2 ? 'index.html' : `list-${currentPage - 1}.html`}" class="prev">← Previous</a>
   ` : ''}
-  ${Array.from({ length: totalPages }, (_, i) => {
-    const p = i + 1;
-    return p === currentPage ? `<span class="current">${p}</span>` 
-                           : `<a href="${getPagePath(p)}">${p}</a>`;
-  }).join('')}
+
+  ${Array.from({ length: totalPages }, (_, i) => i + 1).map(page => `
+    ${page === currentPage ? `
+      <span class="current">${page}</span>
+    ` : `
+      <a href="${page === 1 ? 'index.html' : `list-${page}.html`}">${page}</a>
+    `}
+  `).join('')}
+
   ${currentPage < totalPages ? `
-    <a href="${getPagePath(currentPage + 1)}" class="next">Next →</a>
+    <a href="list-${currentPage + 1}.html" class="next">Next →</a>
   ` : ''}
 </div>
 
