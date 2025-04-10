@@ -29,48 +29,44 @@ async function fetchData(url) {
 }
 
 // Enhanced template engine with loops and conditionals
+// Enhanced template engine with better conditionals and loops
 function renderTemplate(template, data) {
-  // First process loops to establish proper context
-  let output = template.replace(/\{\{#each (\w+)\}\}([\s\S]+?)\{\{\/each\}\}/g, (match, arrayName, loopContent) => {
-    const array = data[arrayName];
+  // Handle loops first
+  let output = template.replace(/\{\{#each ([^}]+)\}\}([\s\S]+?)\{\{\/each\}\}/g, (match, arrayPath, loopContent) => {
+    const array = getNestedValue(data, arrayPath);
     if (!Array.isArray(array)) return '';
     
     return array.map((item, index) => {
-      const itemContext = {
-        ...item,
-        '@index': index,
-        '@first': index === 0,
-        '@last': index === array.length - 1,
-        '@root': data
-      };
-      return renderTemplate(loopContent, itemContext);
+      let itemOutput = loopContent;
+      // Handle @last special variable
+      itemOutput = itemOutput.replace(/\{\{\@last\}\}/g, index === array.length - 1);
+      // Render the item content
+      return renderTemplate(itemOutput, item);
     }).join('');
   });
 
-  // Then process conditionals
-  output = output.replace(/\{\{#if (\w+)\}\}([\s\S]+?)\{\{\/if\}\}/g, (match, condition, ifContent) => {
-    const value = data[condition];
-    if (Array.isArray(value)) {
-      return value.length > 0 ? renderTemplate(ifContent, data) : '';
-    }
-    return value ? renderTemplate(ifContent, data) : '';
-  });
+  // Handle conditionals
+// In renderTemplate function, replace the condition handling with:
+output = output.replace(/\{\{#if ([^}]+)\}\}([\s\S]+?)\{\{\/if\}\}/g, (match, condition, ifContent) => {
+  const value = getNestedValue(data, condition);
+  
+  // Handle array length checks
+  if (condition.endsWith('.length')) {
+    const arrayPath = condition.replace('.length', '');
+    const array = getNestedValue(data, arrayPath);
+    return Array.isArray(array) && array.length > 0 ? ifContent : '';
+  }
+  
+  // Handle empty arrays
+  if (Array.isArray(value)) return value.length > 0 ? ifContent : '';
+  
+  // Regular truthy check
+  return value ? ifContent : '';
+});
 
-  // Process unless conditions
-  output = output.replace(/\{\{#unless (\w+)\}\}([\s\S]+?)\{\{\/unless\}\}/g, (match, condition, unlessContent) => {
-    const value = data[condition];
-    return !value ? renderTemplate(unlessContent, data) : '';
-  });
-
-  // Finally replace simple variables
-  output = output.replace(/\{\{(\w+)\}\}/g, (match, prop) => {
-    return data[prop] || '';
-  });
-
-  // Handle nested properties (like developer.name)
-  output = output.replace(/\{\{(\w+\.\w+)\}\}/g, (match, path) => {
-    const [parent, child] = path.split('.');
-    return (data[parent] && data[parent][child]) || '';
+  // Replace simple placeholders
+  output = output.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+    return getNestedValue(data, path) || '';
   });
 
   return output;
@@ -82,11 +78,7 @@ function getNestedValue(obj, path) {
   let value = obj;
   for (const part of parts) {
     value = value?.[part];
-    if (value === undefined) {
-      console.log(`Could not resolve path part '${part}' in '${path}'`);
-      console.log('Current object:', obj);
-      break;
-    }
+    if (value === undefined) break;
   }
   return value;
 }
