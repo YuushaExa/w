@@ -1,0 +1,26 @@
+<div class="pagination">
+  ${Array.from({ length: totalPages }, (_, i) => `
+    <a href="${i === 0 ? 'index.html' : `page${i + 1}.html`}" 
+       class="${currentPage === i + 1 ? 'active' : ''}">
+      ${i + 1}
+    </a>
+  `).join('')}
+</div>
+
+<style>
+  .pagination {
+    display: flex;
+    gap: 5px;
+    margin: 20px 0;
+    justify-content: center;
+  }
+  .pagination a {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    text-decoration: none;
+  }
+  .pagination a.active {
+    background: #333;
+    color: white;
+  }
+</style>
