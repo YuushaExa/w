@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-// Load configuration
+// Load config
 const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 
 // Ensure output directory exists
@@ -14,10 +14,11 @@ if (!fs.existsSync(config.outputDir)) {
 const templates = {
   base: fs.readFileSync(path.join('themes', config.template, 'baseof.html'), 'utf8'),
   single: fs.readFileSync(path.join('themes', config.template, 'single.html'), 'utf8'),
-  list: fs.readFileSync(path.join('themes', config.template, 'list.html'), 'utf8')
+  list: fs.readFileSync(path.join('themes', config.template, 'list.html'), 'utf8'),
+  pagination: fs.readFileSync(path.join('themes', config.template, 'pagination.html'), 'utf8')
 };
 
-// Helper function to fetch JSON data
+// Helper to fetch JSON data
 async function fetchData(url) {
   return new Promise((resolve, reject) => {
     https.get(url, (res) => {
@@ -28,47 +29,65 @@ async function fetchData(url) {
   });
 }
 
-// Generate HTML by evaluating template literals
-function generateHTML(templateName, data, outputPath) {
-  const template = templates[templateName];
-  
-  // Evaluate template literals (${...})
-  const content = new Function('data', `return \`${template}\``)(data);
-  
-  // If it's not the base template, wrap it in the base layout
-  const fullHTML = templateName === 'base' 
-    ? content 
-    : new Function('data', `return \`${templates.base}\``)({ ...data, content });
-  
-  fs.writeFileSync(outputPath, fullHTML);
-  console.log(`Generated: ${outputPath}`);
+// Generate paginated pages
+function generatePaginatedList(allItems, outputDir) {
+  const itemsPerPage = config.pagination || 10;
+  const totalPages = Math.ceil(allItems.length / itemsPerPage);
+
+  // Generate each page
+  for (let i = 0; i < totalPages; i++) {
+    const currentPage = i + 1;
+    const startIdx = i * itemsPerPage;
+    const endIdx = startIdx + itemsPerPage;
+    const currentItems = allItems.slice(startIdx, endIdx);
+
+    // Generate pagination HTML
+    const paginationHTML = new Function('data', `return \`${templates.pagination}\``)({
+      totalPages,
+      currentPage
+    });
+
+    // Generate the list HTML for this page
+    const listHTML = new Function('data', `return \`${templates.list}\``)({
+      currentItems,
+      pagination: paginationHTML
+    });
+
+    // Wrap in base template
+    const fullHTML = new Function('data', `return \`${templates.base}\``)({
+      title: `Page ${currentPage}`,
+      content: listHTML
+    });
+
+    // Save to file (page1.html, page2.html, etc.)
+    const fileName = i === 0 ? 'index.html' : `page${currentPage}.html`;
+    fs.writeFileSync(path.join(outputDir, fileName), fullHTML);
+    console.log(`Generated: ${fileName}`);
+  }
 }
 
 // Main generation function
 async function generateSite() {
   try {
-    // Load all data sources
+    // Load all data
     const allItems = [];
-    
     for (const dataUrl of config.data) {
       const data = await fetchData(dataUrl);
-      if (Array.isArray(data)) {
-        allItems.push(...data);
-      } else {
-        allItems.push(data);
-      }
+      allItems.push(...(Array.isArray(data) ? data : [data]));
     }
-    
-    // Generate individual pages
+
+    // Generate individual item pages
     for (const item of allItems) {
       const outputPath = path.join(config.outputDir, `${item.id}.html`);
-      generateHTML('single', item, outputPath);
+      const content = new Function('data', `return \`${templates.single}\``)(item);
+      const fullHTML = new Function('data', `return \`${templates.base}\``)({ ...item, content });
+      fs.writeFileSync(outputPath, fullHTML);
+      console.log(`Generated: ${item.id}.html`);
     }
-    
-    // Generate list page
-    const listOutputPath = path.join(config.outputDir, 'index.html');
-    generateHTML('list', { items: allItems }, listOutputPath);
-    
+
+    // Generate paginated list pages
+    generatePaginatedList(allItems, config.outputDir);
+
     console.log('Site generation complete!');
   } catch (error) {
     console.error('Error generating site:', error);
