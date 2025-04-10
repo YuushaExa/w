@@ -1,0 +1,11 @@
+<h2>All ${data.taxonomy}</h2>
+<div class="terms-list">
+  ${data.terms?.map(term => `
+    <div class="term-card">
+      <a href="/${data.taxonomy}/${term.slug}.html">
+        <h3>${term.name}</h3>
+        <p>${term.count} items</p>
+      </a>
+    </div>
+  `).join('') || 'No terms found.'}
+</div>
