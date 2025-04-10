@@ -1,26 +1,17 @@
-<div class="pagination">
-  ${Array.from({ length: data.totalPages }, (_, i) => `
-    <a href="${i === 0 ? 'index.html' : `page${i + 1}.html`}" 
-       class="${data.currentPage === i + 1 ? 'active' : ''}">
-      ${i + 1}
-    </a>
-  `).join('')}
+<h2>Visual Novels</h2>
+<div class="item-list">
+  ${data.items?.map(item => `
+    <div class="item-card">
+      <a href="${item.id}.html">
+        ${item.image?.url ? `<img src="${item.image.url}" alt="${item.title}">` : ''}
+        <h3>${item.title || 'Untitled'}</h3>
+      </a>
+      ${item.developers?.length ? `
+        <p><strong>Developers:</strong> 
+          ${item.developers.map(dev => dev.name).join(', ')}
+        </p>
+      ` : ''}
+    </div>
+  `).join('') || 'No items found.'}
 </div>
-
-<style>
-  .pagination {
-    display: flex;
-    gap: 5px;
-    margin: 20px 0;
-    justify-content: center;
-  }
-  .pagination a {
-    padding: 5px 10px;
-    border: 1px solid #ddd;
-    text-decoration: none;
-  }
-  .pagination a.active {
-    background: #333;
-    color: white;
-  }
-</style>
+${pagination}
