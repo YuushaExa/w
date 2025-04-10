@@ -1,18 +1,18 @@
 <div class="pagination">
   ${currentPage > 1 ? `
-    <a href="${currentPage === 2 ? 'index.html' : `list-${currentPage - 1}.html`}" class="prev">← Previous</a>
+    <a href="${currentPage === 2 ? 'index.html' : `list1-${currentPage - 1}.html`}" class="prev">← Previous</a>
   ` : ''}
 
   ${Array.from({ length: totalPages }, (_, i) => i + 1).map(page => `
     ${page === currentPage ? `
       <span class="current">${page}</span>
     ` : `
-      <a href="${page === 1 ? 'index.html' : `list-${page}.html`}">${page}</a>
+      <a href="${page === 1 ? 'index.html' : `list1-${page}.html`}">${page}</a>
     `}
   `).join('')}
 
   ${currentPage < totalPages ? `
-    <a href="list-${currentPage + 1}.html" class="next">Next →</a>
+    <a href="list1-${currentPage + 1}.html" class="next">Next →</a>
   ` : ''}
 </div>
 
