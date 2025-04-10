@@ -1,9 +1,26 @@
 <div class="pagination">
   ${currentPage > 1 ? `
-    <a href="${currentPage === 2 ? 'index.html' : filenamePattern.replace('*', currentPage - 1)}" class="prev">← Previous</a>
+    <a href="${currentPage === 2 ? 'index.html' : filenamePattern.replace('*', currentPage - 1)}" class="prev">‹ Prev</a>
   ` : ''}
 
-  ${Array.from({ length: totalPages }, (_, i) => i + 1).map(page => `
+  <!-- Always show first page -->
+  ${currentPage > 4 ? `
+    <a href="index.html">1</a>
+    ${currentPage > 5 ? `<span class="ellipsis">…</span>` : ''}
+  ` : ''}
+
+  <!-- Show surrounding pages -->
+  ${Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
+    let page;
+    if (currentPage <= 4) {
+      page = i + 1;
+    } else if (currentPage >= totalPages - 3) {
+      page = totalPages - 6 + i;
+    } else {
+      page = currentPage - 3 + i;
+    }
+    return page;
+  }).filter(page => page >= 1 && page <= totalPages).map(page => `
     ${page === currentPage ? `
       <span class="current">${page}</span>
     ` : `
@@ -11,8 +28,14 @@
     `}
   `).join('')}
 
+  <!-- Always show last page -->
+  ${currentPage < totalPages - 3 ? `
+    ${currentPage < totalPages - 4 ? `<span class="ellipsis">…</span>` : ''}
+    <a href="${filenamePattern.replace('*', totalPages)}">${totalPages}</a>
+  ` : ''}
+
   ${currentPage < totalPages ? `
-    <a href="${filenamePattern.replace('*', currentPage + 1)}" class="next">Next →</a>
+    <a href="${filenamePattern.replace('*', currentPage + 1)}" class="next">Next ›</a>
   ` : ''}
 </div>
 <style>
