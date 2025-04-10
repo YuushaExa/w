@@ -1,19 +1,19 @@
 <article class="item">
-  <h2>{{title}}</h2>
-  {{#if image.url}}<img src="{{image.url}}" alt="{{title}}">{{/if}}
+  <h2>${data.title || 'Untitled'}</h2>
+  ${data.image?.url ? `<img src="${data.image.url}" alt="${data.title}">` : ''}
   
- <div class="details">
-    {{#if developers.length}}
-    <p><strong>Developers:</strong> 
-      {{#each developers}}{{name}}{{/each}}
-    </p>
-    {{/if}}
+  <div class="details">
+    ${data.developers?.length ? `
+      <p><strong>Developers:</strong> 
+        ${data.developers.map(dev => dev.name).join(', ')}
+      </p>
+    ` : ''}
     
-    {{#if description}}
-    <div class="description">
-      <h3>Description</h3>
-      <p>{{description}}</p>
-    </div>
-    {{/if}}
+    ${data.description ? `
+      <div class="description">
+        <h3>Description</h3>
+        <p>${data.description}</p>
+      </div>
+    ` : ''}
   </div>
 </article>
