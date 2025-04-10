@@ -6,6 +6,6 @@
   "outputDir": "public",
 "pagination": {
   "itemsPerPage": 10,
-  "filenamePattern": "?*.html"
+  "filenamePattern": "list-*.html"
 }
 }
