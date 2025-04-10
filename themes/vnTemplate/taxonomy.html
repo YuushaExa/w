@@ -1,0 +1,17 @@
+<h2>${data.term} (${data.taxonomy})</h2>
+<div class="item-list">
+  ${data.items?.map(item => `
+    <div class="item-card">
+      <a href="/${item.id}.html">
+        ${item.image?.url ? `<img src="${item.image.url}" alt="${item.title}">` : ''}
+        <h3>${item.title || 'Untitled'}</h3>
+      </a>
+      ${item[data.taxonomy]?.length ? `
+        <p><strong>${data.taxonomy}:</strong> 
+          ${item[data.taxonomy].map(t => t.name || t).join(', ')}
+        </p>
+      ` : ''}
+    </div>
+  `).join('') || 'No items found.'}
+</div>
+${pagination}
