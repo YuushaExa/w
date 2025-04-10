@@ -34,20 +34,20 @@ function generatePaginatedList(allItems, outputDir) {
   const itemsPerPage = config.pagination || 10;
   const totalPages = Math.ceil(allItems.length / itemsPerPage);
 
-  // Generate each page
   for (let i = 0; i < totalPages; i++) {
     const currentPage = i + 1;
     const startIdx = i * itemsPerPage;
     const endIdx = startIdx + itemsPerPage;
     const currentItems = allItems.slice(startIdx, endIdx);
 
-    // Generate pagination HTML
+    // Generate pagination HTML with ALL required variables
     const paginationHTML = new Function('data', `return \`${templates.pagination}\``)({
       totalPages,
-      currentPage
+      currentPage,
+      itemsPerPage
     });
 
-    // Generate the list HTML for this page
+    // Generate list HTML with current items and pagination
     const listHTML = new Function('data', `return \`${templates.list}\``)({
       currentItems,
       pagination: paginationHTML
@@ -59,7 +59,6 @@ function generatePaginatedList(allItems, outputDir) {
       content: listHTML
     });
 
-    // Save to file (page1.html, page2.html, etc.)
     const fileName = i === 0 ? 'index.html' : `page${currentPage}.html`;
     fs.writeFileSync(path.join(outputDir, fileName), fullHTML);
     console.log(`Generated: ${fileName}`);
