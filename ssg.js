@@ -15,7 +15,7 @@ const templates = {
   base: fs.readFileSync(path.join('themes', config.template, 'baseof.html'), 'utf8'),
   single: fs.readFileSync(path.join('themes', config.template, 'single.html'), 'utf8'),
   list: fs.readFileSync(path.join('themes', config.template, 'list.html'), 'utf8'),
-  pagination: fs.readFileSync(path.join('themes', config.template, 'pagination.html'), 'utf8') || '<div class="pagination">${pagination}</div>'
+  pagination: fs.readFileSync(path.join('themes', config.template, 'pagination.html'), 'utf8')
 };
 
 // Helper function to fetch JSON data
@@ -29,42 +29,30 @@ async function fetchData(url) {
   });
 }
 
-// Generate pagination HTML
-function generatePagination(currentPage, totalPages) {
-  let paginationHTML = '<div class="pagination">';
-  
-  if (currentPage > 1) {
-    paginationHTML += `<a href="${currentPage === 2 ? 'index.html' : `page${currentPage - 1}.html`}" class="prev">Previous</a> `;
-  }
-
-  for (let i = 1; i <= totalPages; i++) {
-    if (i === currentPage) {
-      paginationHTML += `<span class="current">${i}</span> `;
-    } else {
-      paginationHTML += `<a href="${i === 1 ? 'index.html' : `page${i}.html`}">${i}</a> `;
-    }
-  }
-
-  if (currentPage < totalPages) {
-    paginationHTML += `<a href="page${currentPage + 1}.html" class="next">Next</a>`;
-  }
-
-  paginationHTML += '</div>';
-  return paginationHTML;
+// Extract path function from template
+function getPathFunction() {
+  const pathFuncMatch = templates.pagination.match(/function getPagePath\(.*?\)\s*{([\s\S]*?)}/);
+  if (!pathFuncMatch) throw new Error('Missing getPagePath() in pagination.html');
+  return new Function('page', pathFuncMatch[1]);
 }
 
-// Generate HTML by evaluating template literals
+// Generate pagination HTML and get current page path
+function getPaginationInfo(currentPage, totalPages, getPagePath) {
+  const html = new Function('currentPage', 'totalPages', 'getPagePath', `
+    return \`${templates.pagination}\`;
+  `)(currentPage, totalPages, getPagePath);
+  
+  return {
+    html,
+    currentPagePath: getPagePath(currentPage)
+  };
+}
+
+// Generate HTML with template literals
 function generateHTML(templateName, data, outputPath, pagination = '') {
   const template = templates[templateName];
-  
-  // Evaluate template literals (${...})
   const content = new Function('data', 'pagination', `return \`${template}\``)(data, pagination);
-  
-  // If it's not the base template, wrap it in the base layout
-  const fullHTML = templateName === 'base' 
-    ? content 
-    : new Function('data', `return \`${templates.base}\``)({ ...data, content });
-  
+  const fullHTML = new Function('data', `return \`${templates.base}\``)({ ...data, content });
   fs.writeFileSync(outputPath, fullHTML);
   console.log(`Generated: ${outputPath}`);
 }
@@ -74,46 +62,41 @@ async function generateSite() {
   try {
     // Load all data sources
     const allItems = [];
-    
     for (const dataUrl of config.data) {
       const data = await fetchData(dataUrl);
-      if (Array.isArray(data)) {
-        allItems.push(...data);
-      } else {
-        allItems.push(data);
-      }
+      allItems.push(...(Array.isArray(data) ? data : [data]));
     }
-    
+
     // Generate individual pages
     for (const item of allItems) {
-      const outputPath = path.join(config.outputDir, `${item.id}.html`);
-      generateHTML('single', item, outputPath);
+      generateHTML('single', item, path.join(config.outputDir, `${item.id}.html`));
     }
-    
-    // Generate paginated list pages if pagination is enabled
+
+    // Generate paginated list pages
     if (config.pagination) {
+      const getPagePath = getPathFunction();
       const itemsPerPage = config.pagination;
       const totalPages = Math.ceil(allItems.length / itemsPerPage);
-      
+
       for (let page = 1; page <= totalPages; page++) {
-        const startIdx = (page - 1) * itemsPerPage;
-        const endIdx = startIdx + itemsPerPage;
-        const pageItems = allItems.slice(startIdx, endIdx);
-        
-        const paginationHTML = generatePagination(page, totalPages);
-        const outputPath = path.join(
-          config.outputDir, 
-          page === 1 ? 'index.html' : `page${page}.html`
+        const pageItems = allItems.slice(
+          (page - 1) * itemsPerPage,
+          page * itemsPerPage
         );
+
+        const { html: paginationHTML, currentPagePath } = 
+          getPaginationInfo(page, totalPages, getPagePath);
         
-        generateHTML('list', { items: pageItems }, outputPath, paginationHTML);
+        generateHTML('list', { items: pageItems }, 
+          path.join(config.outputDir, currentPagePath), 
+          paginationHTML);
       }
     } else {
-      // Generate single list page if no pagination
-      const listOutputPath = path.join(config.outputDir, 'index.html');
-      generateHTML('list', { items: allItems }, listOutputPath);
+      // Non-paginated fallback
+      generateHTML('list', { items: allItems }, 
+        path.join(config.outputDir, 'index.html'));
     }
-    
+
     console.log('Site generation complete!');
   } catch (error) {
     console.error('Error generating site:', error);
