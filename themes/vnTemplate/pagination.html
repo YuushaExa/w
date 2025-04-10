@@ -1,18 +1,63 @@
 <div class="pagination">
   ${currentPage > 1 ? `
-    <a href="${currentPage === 2 ? 'index.html' : filenamePattern.replace('*', currentPage - 1)}" class="prev">← Previous</a>
+    <a href="${currentPage === 2 ? 'index.html' : filenamePattern.replace('*', currentPage - 1)}" class="prev">‹ Prev</a>
   ` : ''}
 
-  ${Array.from({ length: totalPages }, (_, i) => i + 1).map(page => `
-    ${page === currentPage ? `
-      <span class="current">${page}</span>
+  <!-- Always show first page -->
+  ${currentPage === 1 ? `
+    <span class="current">1</span>
+  ` : `
+    <a href="index.html">1</a>
+  `}
+
+  <!-- Show left ellipsis if needed -->
+  ${currentPage > 3 ? `
+    <span class="ellipsis">…</span>
+  ` : ''}
+
+  <!-- Middle pages -->
+  ${(() => {
+    let pages = '';
+    const range = 2; // Number of pages to show around current
+    let start = Math.max(2, currentPage - range);
+    let end = Math.min(totalPages - 1, currentPage + range);
+    
+    // Adjust if near start
+    if (currentPage <= range + 1) {
+      end = Math.min(totalPages - 1, range * 2 + 1);
+    }
+    
+    // Adjust if near end
+    if (currentPage >= totalPages - range) {
+      start = Math.max(2, totalPages - range * 2);
+    }
+    
+    for (let i = start; i <= end; i++) {
+      pages += i === currentPage ? `
+        <span class="current">${i}</span>
+      ` : `
+        <a href="${filenamePattern.replace('*', i)}">${i}</a>
+      `;
+    }
+    return pages;
+  })()}
+
+  <!-- Show right ellipsis if needed -->
+  ${currentPage < totalPages - 2 ? `
+    <span class="ellipsis">…</span>
+  ` : ''}
+
+  <!-- Show last page if different from first -->
+  ${totalPages > 1 ? (
+    currentPage === totalPages ? `
+      <span class="current">${totalPages}</span>
     ` : `
-      <a href="${page === 1 ? 'index.html' : filenamePattern.replace('*', page)}">${page}</a>
-    `}
-  `).join('')}
+      <a href="${filenamePattern.replace('*', totalPages)}">${totalPages}</a>
+    `
+  ) : ''}
 
   ${currentPage < totalPages ? `
-    <a href="${filenamePattern.replace('*', currentPage + 1)}" class="next">Next →</a>
+    <a href="${filenamePattern.replace('*', currentPage + 1)}" class="next">Next ›</a>
   ` : ''}
 </div>
 <style>
