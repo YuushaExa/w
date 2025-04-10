@@ -72,9 +72,11 @@ async function generateSite() {
       for (let page = 1; page <= totalPages; page++) {
         const pageItems = allItems.slice((page - 1) * itemsPerPage, page * itemsPerPage);
         const paginationHTML = getPaginationHTML(page, totalPages);
-       const outputPath = path.join(
+const filenamePattern = config.pagination?.filenamePattern || 'list-*.html';
+const paginationHTML = getPaginationHTML(page, totalPages, filenamePattern);
+const outputPath = path.join(
   config.outputDir,
-  page === 1 ? 'index.html' : config.pagination.filenamePattern.replace('{page}', page)
+  page === 1 ? 'index.html' : filenamePattern.replace('*', page)
 );
         generateHTML('list', { items: pageItems }, outputPath, paginationHTML);
       }
