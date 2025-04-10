@@ -31,10 +31,13 @@ async function fetchData(url) {
 
 // Generate pagination HTML (pure template evaluation)
 function getPaginationHTML(currentPage, totalPages) {
-  return new Function('currentPage', 'totalPages', `return \`${templates.pagination}\``)(
-    currentPage,
-    totalPages
-  );
+  const filenamePattern = config.pagination?.filenamePattern || 'list-*.html';
+  return new Function(
+    'currentPage', 
+    'totalPages',
+    'filenamePattern',
+    `return \`${templates.pagination}\``
+  )(currentPage, totalPages, filenamePattern);
 }
 
 // Generate HTML with template literals
