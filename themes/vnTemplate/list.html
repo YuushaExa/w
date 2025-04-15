@@ -2,7 +2,7 @@
 <div class="item-list">
   ${data.items?.map(item => `
     <div class="item-card">
-      <a href="/w/page/${item.id}.html">
+      <a href="${item.id}.html">
         ${item.image?.url ? `<img src="${item.image.url}" alt="${item.title}">` : ''}
         <h3>${item.title || 'Untitled'}</h3>
       </a>
