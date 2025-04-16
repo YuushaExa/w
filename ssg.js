@@ -144,7 +144,7 @@ async function generateSite() {
 
     // Generate individual pages
     for (const item of allItems) {
-      generateHTML('single', item, path.join(basePath, `${item.id}.html`));
+      generateHTML('single', item, path.join(basePath, `${item.title}.html`));
     }
 
     // Generate paginated list pages
