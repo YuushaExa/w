@@ -2,6 +2,17 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
+// Basic slugify function
+function slugify(input) {
+  return String(input)
+    .toLowerCase()
+    .replace(/\s+/g, '-')           // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+    .replace(/^-+/, '')             // Trim - from start of text
+    .replace(/-+$/, '');            // Trim - from end of text
+}
+
 // Load config
 const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 
@@ -55,20 +66,21 @@ async function processTaxonomies(allItems, basePath) {
   if (!config.taxonomies || !Array.isArray(config.taxonomies)) return;
 
   for (const taxonomy of config.taxonomies) {
-    // Create taxonomy directory within the base path
-    const taxonomyDir = path.join(basePath, taxonomy);
+    const taxonomySlug = slugify(taxonomy);
+    const taxonomyDir = path.join(basePath, taxonomySlug);
+    
     if (!fs.existsSync(taxonomyDir)) {
       fs.mkdirSync(taxonomyDir, { recursive: true });
     }
 
-    // Collect all terms for this taxonomy
     const termsMap = new Map();
 
     for (const item of allItems) {
       if (item[taxonomy] && Array.isArray(item[taxonomy])) {
         for (const term of item[taxonomy]) {
           const termName = term.name || term;
-          const termSlug = termName.toLowerCase().replace(/\s+/g, '-');
+          const termSlug = slugify(termName);
+          
           if (!termsMap.has(termSlug)) {
             termsMap.set(termSlug, {
               name: termName,
@@ -80,11 +92,10 @@ async function processTaxonomies(allItems, basePath) {
       }
     }
 
-    // Generate term pages (individual taxonomy pages)
+    // Generate term pages
     for (const [termSlug, termData] of termsMap) {
       const { name, items } = termData;
       
-      // Generate paginated term pages if needed
       if (config.pagination) {
         const itemsPerPage = config.pagination.itemsPerPage;
         const totalPages = Math.ceil(items.length / itemsPerPage);
@@ -112,7 +123,7 @@ async function processTaxonomies(allItems, basePath) {
       }
     }
 
-    // Generate terms list page (all terms for this taxonomy)
+    // Generate terms list page
     const termsList = Array.from(termsMap.entries()).map(([slug, termData]) => ({
       name: termData.name,
       slug: slug,
@@ -137,14 +148,15 @@ async function generateSite() {
     }
 
     // Create path directory if specified in config
-    const basePath = config.path ? path.join(config.outputDir, config.path) : config.outputDir;
+    const basePath = config.path ? path.join(config.outputDir, slugify(config.path)) : config.outputDir;
     if (!fs.existsSync(basePath)) {
       fs.mkdirSync(basePath, { recursive: true });
     }
 
     // Generate individual pages
     for (const item of allItems) {
-      generateHTML('single', item, path.join(basePath, `${item.title}.html`));
+      const itemSlug = item.slug || slugify(item.title || 'untitled');
+      generateHTML('single', item, path.join(basePath, `${itemSlug}.html`));
     }
 
     // Generate paginated list pages
@@ -163,11 +175,10 @@ async function generateSite() {
         generateHTML('list', { items: pageItems }, outputPath, paginationHTML);
       }
     } else {
-      // Non-paginated fallback
       generateHTML('list', { items: allItems }, path.join(basePath, 'index.html'));
     }
 
-    // Process taxonomies with the base path included
+    // Process taxonomies
     await processTaxonomies(allItems, basePath);
 
     console.log('Site generation complete!');
