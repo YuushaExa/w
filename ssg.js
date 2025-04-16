@@ -32,8 +32,7 @@ async function fetchData(url) {
 }
 
 // Generate pagination HTML
-function getPaginationHTML(currentPage, totalPages) {
-  const filenamePattern = config.pagination?.filenamePattern || 'list-*.html';
+function getPaginationHTML(currentPage, totalPages, filenamePattern) {
   return new Function(
     'currentPage', 
     'totalPages',
@@ -51,13 +50,13 @@ function generateHTML(templateName, data, outputPath, pagination = '') {
   console.log(`Generated: ${outputPath}`);
 }
 
-// Process taxonomies
-async function processTaxonomies(allItems) {
+// Process taxonomies with base path
+async function processTaxonomies(allItems, basePath) {
   if (!config.taxonomies || !Array.isArray(config.taxonomies)) return;
 
   for (const taxonomy of config.taxonomies) {
-    // Create taxonomy directory
-    const taxonomyDir = path.join(config.outputDir, taxonomy);
+    // Create taxonomy directory within the base path
+    const taxonomyDir = path.join(basePath, taxonomy);
     if (!fs.existsSync(taxonomyDir)) {
       fs.mkdirSync(taxonomyDir, { recursive: true });
     }
@@ -68,24 +67,28 @@ async function processTaxonomies(allItems) {
     for (const item of allItems) {
       if (item[taxonomy] && Array.isArray(item[taxonomy])) {
         for (const term of item[taxonomy]) {
-          if (!termsMap.has(term.name || term)) {
-            termsMap.set(term.name || term, []);
+          const termName = term.name || term;
+          const termSlug = termName.toLowerCase().replace(/\s+/g, '-');
+          if (!termsMap.has(termSlug)) {
+            termsMap.set(termSlug, {
+              name: termName,
+              items: []
+            });
           }
-          termsMap.get(term.name || term).push(item);
+          termsMap.get(termSlug).items.push(item);
         }
       }
     }
 
     // Generate term pages (individual taxonomy pages)
-    for (const [term, items] of termsMap) {
-      const termSlug = term.toLowerCase().replace(/\s+/g, '-');
-      const termPath = path.join(taxonomyDir, `${termSlug}.html`);
+    for (const [termSlug, termData] of termsMap) {
+      const { name, items } = termData;
       
       // Generate paginated term pages if needed
       if (config.pagination) {
         const itemsPerPage = config.pagination.itemsPerPage;
         const totalPages = Math.ceil(items.length / itemsPerPage);
-        const filenamePattern = config.pagination.filenamePattern || 'list-*.html';
+        const filenamePattern = config.pagination.filenamePattern || 'page-*.html';
 
         for (let page = 1; page <= totalPages; page++) {
           const pageItems = items.slice((page - 1) * itemsPerPage, page * itemsPerPage);
@@ -96,24 +99,24 @@ async function processTaxonomies(allItems) {
           );
           generateHTML('taxonomy', { 
             items: pageItems, 
-            term: term,
+            term: name,
             taxonomy: taxonomy 
           }, outputPath, paginationHTML);
         }
       } else {
         generateHTML('taxonomy', { 
           items: items, 
-          term: term,
+          term: name,
           taxonomy: taxonomy 
-        }, termPath);
+        }, path.join(taxonomyDir, `${termSlug}.html`));
       }
     }
 
     // Generate terms list page (all terms for this taxonomy)
-    const termsList = Array.from(termsMap.keys()).map(term => ({
-      name: term,
-      slug: term.toLowerCase().replace(/\s+/g, '-'),
-      count: termsMap.get(term).length
+    const termsList = Array.from(termsMap.entries()).map(([slug, termData]) => ({
+      name: termData.name,
+      slug: slug,
+      count: termData.items.length
     }));
 
     generateHTML('terms', { 
@@ -173,16 +176,4 @@ async function generateSite() {
   }
 }
 
-// Updated processTaxonomies function with basePath parameter
-async function processTaxonomies(allItems, basePath) {
-  if (!config.taxonomies || !Array.isArray(config.taxonomies)) return;
-
-  for (const taxonomy of config.taxonomies) {
-    // Create taxonomy directory within the base path
-    const taxonomyDir = path.join(basePath, taxonomy);
-    if (!fs.existsSync(taxonomyDir)) {
-      fs.mkdirSync(taxonomyDir, { recursive: true });
-    }
-    }
-}
 generateSite();
