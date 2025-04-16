@@ -8,6 +8,7 @@ function slugify(input) {
     .toLowerCase()
     .replace(/\s+/g, '-')           // Replace spaces with -
     .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
     .replace(/^-+/, '')             // Trim - from start of text
     .replace(/-+$/, '');            // Trim - from end of text
 }
@@ -54,27 +55,8 @@ function getPaginationHTML(currentPage, totalPages, filenamePattern) {
 // Generate HTML with template literals
 function generateHTML(templateName, data, outputPath, pagination = '') {
   const template = templates[templateName];
-  
-  const context = {
-    ...data,
-    pagination,
-    helpers: {
-      slugify: (input) => slugify(input)
-    }
-  };
-
-  const content = new Function('data', `
-    const { helpers, ...rest } = data;
-    const { slugify } = helpers;
-    return \`${template}\`
-  `)(context);
-
-  const fullHTML = new Function('data', `
-    const { helpers, ...rest } = data;
-    const { slugify } = helpers;
-    return \`${templates.base}\`
-  `)({ ...context, content });
-
+  const content = new Function('data', 'pagination', `return \`${template}\``)(data, pagination);
+  const fullHTML = new Function('data', `return \`${templates.base}\``)({ ...data, content });
   fs.writeFileSync(outputPath, fullHTML);
   console.log(`Generated: ${outputPath}`);
 }
