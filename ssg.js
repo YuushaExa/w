@@ -133,33 +133,39 @@ async function generateSite() {
       allItems.push(...(Array.isArray(data) ? data : [data]));
     }
 
+    // Create path directory if specified in config
+    const basePath = config.path ? path.join(config.outputDir, config.path) : config.outputDir;
+    if (!fs.existsSync(basePath)) {
+      fs.mkdirSync(basePath, { recursive: true });
+    }
+
     // Generate individual pages
     for (const item of allItems) {
-      generateHTML('single', item, path.join(config.outputDir, `${item.id}.html`));
+      generateHTML('single', item, path.join(basePath, `${item.id}.html`));
     }
 
     // Generate paginated list pages
     if (config.pagination) {
       const itemsPerPage = config.pagination.itemsPerPage;
       const totalPages = Math.ceil(allItems.length / itemsPerPage);
-      const filenamePattern = config.pagination.filenamePattern || 'list-*.html';
+      const filenamePattern = config.pagination.filenamePattern || 'page-*.html';
 
       for (let page = 1; page <= totalPages; page++) {
         const pageItems = allItems.slice((page - 1) * itemsPerPage, page * itemsPerPage);
         const paginationHTML = getPaginationHTML(page, totalPages, filenamePattern);
         const outputPath = path.join(
-          config.outputDir,
+          basePath,
           page === 1 ? 'index.html' : filenamePattern.replace('*', page)
         );
         generateHTML('list', { items: pageItems }, outputPath, paginationHTML);
       }
     } else {
       // Non-paginated fallback
-      generateHTML('list', { items: allItems }, path.join(config.outputDir, 'index.html'));
+      generateHTML('list', { items: allItems }, path.join(basePath, 'index.html'));
     }
 
-    // Process taxonomies
-    await processTaxonomies(allItems);
+    // Process taxonomies with the base path included
+    await processTaxonomies(allItems, basePath);
 
     console.log('Site generation complete!');
   } catch (error) {
@@ -167,4 +173,16 @@ async function generateSite() {
   }
 }
 
+// Updated processTaxonomies function with basePath parameter
+async function processTaxonomies(allItems, basePath) {
+  if (!config.taxonomies || !Array.isArray(config.taxonomies)) return;
+
+  for (const taxonomy of config.taxonomies) {
+    // Create taxonomy directory within the base path
+    const taxonomyDir = path.join(basePath, taxonomy);
+    if (!fs.existsSync(taxonomyDir)) {
+      fs.mkdirSync(taxonomyDir, { recursive: true });
+    }
+    }
+}
 generateSite();
