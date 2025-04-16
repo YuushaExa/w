@@ -55,33 +55,11 @@ function getPaginationHTML(currentPage, totalPages, filenamePattern) {
 // Generate HTML with template literals
 function generateHTML(templateName, data, outputPath, pagination = '') {
   const template = templates[templateName];
-  
-  // Create a context object that includes both data and helper functions
-  const context = {
-    ...data,
-    pagination,
-    helpers: {
-      slugify: (input) => slugify(input)
-    }
-  };
-
-  // Modified template evaluation to include helpers
-  const content = new Function('data', `
-    const { helpers, ...rest } = data;
-    const { slugify } = helpers;
-    return \`${template}\`
-  `)(context);
-
-  const fullHTML = new Function('data', `
-    const { helpers, ...rest } = data;
-    const { slugify } = helpers;
-    return \`${templates.base}\`
-  `)({ ...context, content });
-
+  const content = new Function('data', 'pagination', `return \`${template}\``)(data, pagination);
+  const fullHTML = new Function('data', `return \`${templates.base}\``)({ ...data, content });
   fs.writeFileSync(outputPath, fullHTML);
   console.log(`Generated: ${outputPath}`);
 }
-
 // Process taxonomies with base path
 async function processTaxonomies(allItems, basePath) {
   if (!config.taxonomies || !Array.isArray(config.taxonomies)) return;
