@@ -183,7 +183,7 @@ async function generateSite() {
     // Generate individual pages
     for (const item of allItems) {
       const itemSlug = item.slug || slugify(item.title || 'untitled');
-      generateHTML('single', item, path.join(basePath, `${itemSlug}.html`));
+      generateHTML('single', item, path.join(basePath, `${itemSlug}`));
     }
 
     // Generate paginated list pages
