@@ -6,11 +6,11 @@ const https = require('https');
 function slugify(input) {
   return String(input)
     .toLowerCase()
-    .replace(/\s+/g, '-')           // Replace spaces with -
-    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
-    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
-    .replace(/^-+/, '')             // Trim - from start of text
-    .replace(/-+$/, '');            // Trim - from end of text
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
 }
 
 // Load config
@@ -31,6 +31,11 @@ const templates = {
   terms: fs.readFileSync(path.join('themes', config.template, 'terms.html'), 'utf8')
 };
 
+// Generate clean path URLs for links
+function cleanPath(url) {
+  return url.replace(/\.html$/, '');
+}
+
 // Fetch data helper
 async function fetchData(url) {
   return new Promise((resolve, reject) => {
@@ -42,36 +47,35 @@ async function fetchData(url) {
   });
 }
 
-// Generate pagination HTML
-function getPaginationHTML(currentPage, totalPages, filenamePattern) {
+// Generate pagination HTML with clean paths
+function getPaginationHTML(currentPage, totalPages, basePath) {
   return new Function(
-    'currentPage', 
+    'currentPage',
     'totalPages',
-    'filenamePattern',
+    'basePath',
+    'cleanPath',
     `return \`${templates.pagination}\``
-  )(currentPage, totalPages, filenamePattern);
+  )(currentPage, totalPages, basePath, cleanPath);
 }
 
-// Generate HTML with template literals
+// Generate HTML with clean paths
 function generateHTML(templateName, data, outputPath, pagination = '') {
   const template = templates[templateName];
   
-  // Create a context object with data, pagination, and our helper functions
   const context = {
     ...data,
     pagination,
-    slugify: (input) => slugify(input)  // Add slugify directly to the context
+    slugify,
+    cleanPath
   };
 
-  // Modified template evaluation to include our context
   const content = new Function(
-    'data', 
+    'data',
     `with(data) { return \`${template}\` }`
   )(context);
 
-  // Also make slugify available in the base template
   const fullHTML = new Function(
-    'data', 
+    'data',
     `with(data) { return \`${templates.base}\` }`
   )({ ...context, content });
 
@@ -79,8 +83,7 @@ function generateHTML(templateName, data, outputPath, pagination = '') {
   console.log(`Generated: ${outputPath}`);
 }
 
-// Process taxonomies with base path
-// Process taxonomies with base path
+// Process taxonomies
 async function processTaxonomies(allItems, basePath) {
   if (!config.taxonomies || !Array.isArray(config.taxonomies)) return;
 
@@ -118,35 +121,32 @@ async function processTaxonomies(allItems, basePath) {
       if (config.pagination) {
         const itemsPerPage = config.pagination.itemsPerPage;
         const totalPages = Math.ceil(items.length / itemsPerPage);
-        const filenamePattern = config.pagination.filenamePattern || 'page-*.html';
 
         for (let page = 1; page <= totalPages; page++) {
           const pageItems = items.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-          // Create a custom filename pattern that includes the term slug
-          const termFilenamePattern = `${termSlug}/page-*.html`;
-          const paginationHTML = getPaginationHTML(page, totalPages, termFilenamePattern);
+          const paginationHTML = getPaginationHTML(
+            page,
+            totalPages,
+            `${taxonomySlug}/${termSlug}`,
+            cleanPath
+          );
           
           const outputPath = path.join(
             taxonomyDir,
-            page === 1 ? `${termSlug}.html` : `${termSlug}/page-${page}.html`
+            page === 1 ? `${termSlug}.html` : `${termSlug}-page-${page}.html`
           );
           
-          // Ensure the term directory exists for paginated pages
-          if (page > 1 && !fs.existsSync(path.join(taxonomyDir, termSlug))) {
-            fs.mkdirSync(path.join(taxonomyDir, termSlug), { recursive: true });
-          }
-          
-          generateHTML('taxonomy', { 
-            items: pageItems, 
+          generateHTML('taxonomy', {
+            items: pageItems,
             term: name,
-            taxonomy: taxonomy 
+            taxonomy: taxonomy
           }, outputPath, paginationHTML);
         }
       } else {
-        generateHTML('taxonomy', { 
-          items: items, 
+        generateHTML('taxonomy', {
+          items: items,
           term: name,
-          taxonomy: taxonomy 
+          taxonomy: taxonomy
         }, path.join(taxonomyDir, `${termSlug}.html`));
       }
     }
@@ -158,9 +158,9 @@ async function processTaxonomies(allItems, basePath) {
       count: termData.items.length
     }));
 
-    generateHTML('terms', { 
+    generateHTML('terms', {
       terms: termsList,
-      taxonomy: taxonomy 
+      taxonomy: taxonomy
     }, path.join(taxonomyDir, 'index.html'));
   }
 }
@@ -175,35 +175,46 @@ async function generateSite() {
       allItems.push(...(Array.isArray(data) ? data : [data]));
     }
 
-    // Create path directory if specified in config
+    // Create base directory
     const basePath = config.path ? path.join(config.outputDir, slugify(config.path)) : config.outputDir;
     if (!fs.existsSync(basePath)) {
       fs.mkdirSync(basePath, { recursive: true });
     }
 
-    // Generate individual pages
+    // Generate individual game pages
+    const gamesDir = path.join(basePath, 'games');
+    if (!fs.existsSync(gamesDir)) {
+      fs.mkdirSync(gamesDir, { recursive: true });
+    }
+
     for (const item of allItems) {
       const itemSlug = item.slug || slugify(item.title || 'untitled');
-      generateHTML('single', item, path.join(basePath, `${itemSlug}.html`));
+      generateHTML('single', item, path.join(gamesDir, `${itemSlug}.html`));
     }
 
     // Generate paginated list pages
     if (config.pagination) {
       const itemsPerPage = config.pagination.itemsPerPage;
       const totalPages = Math.ceil(allItems.length / itemsPerPage);
-      const filenamePattern = config.pagination.filenamePattern || 'page-*.html';
 
       for (let page = 1; page <= totalPages; page++) {
         const pageItems = allItems.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-        const paginationHTML = getPaginationHTML(page, totalPages, filenamePattern);
+        const paginationHTML = getPaginationHTML(
+          page,
+          totalPages,
+          'games',
+          cleanPath
+        );
+        
         const outputPath = path.join(
           basePath,
-          page === 1 ? 'index.html' : filenamePattern.replace('*', page)
+          page === 1 ? 'games.html' : `games-page-${page}.html`
         );
+        
         generateHTML('list', { items: pageItems }, outputPath, paginationHTML);
       }
     } else {
-      generateHTML('list', { items: allItems }, path.join(basePath, 'index.html'));
+      generateHTML('list', { items: allItems }, path.join(basePath, 'games.html'));
     }
 
     // Process taxonomies
