@@ -10,6 +10,6 @@
   "outputDir": "public",
   "pagination": {
     "itemsPerPage": 10,
-    "filenamePattern": "page-*.html"
+    "filenamePattern": "/page-*.html"
   }
 }
