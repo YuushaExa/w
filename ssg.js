@@ -42,45 +42,51 @@ async function fetchData(url) {
   });
 }
 
-// Generate pagination HTML
+// Generate pagination HTML with clean URLs
 function getPaginationHTML(currentPage, totalPages, filenamePattern) {
+  // Remove .html from the pattern
+  const cleanPattern = filenamePattern.replace('.html', '').replace('*.', '');
   return new Function(
     'currentPage', 
     'totalPages',
     'filenamePattern',
-    `return \`${templates.pagination}\``
-  )(currentPage, totalPages, filenamePattern);
+    `return \`${templates.pagination.replace(/\.html/g, '')}\``
+  )(currentPage, totalPages, cleanPattern);
 }
 
-// Generate HTML with template literals
+// Generate HTML with clean URLs (using directories with index.html)
 function generateHTML(templateName, data, outputPath, pagination = '') {
   const template = templates[templateName];
   
-  // Create a context object with data, pagination, and our helper functions
   const context = {
     ...data,
     pagination,
-    slugify: (input) => slugify(input)  // Add slugify directly to the context
+    slugify: (input) => slugify(input)
   };
 
-  // Modified template evaluation to include our context
   const content = new Function(
     'data', 
     `with(data) { return \`${template}\` }`
   )(context);
 
-  // Also make slugify available in the base template
   const fullHTML = new Function(
     'data', 
     `with(data) { return \`${templates.base}\` }`
   )({ ...context, content });
 
-  fs.writeFileSync(outputPath, fullHTML);
-  console.log(`Generated: ${outputPath}`);
+  // Create directory structure with index.html
+  const dirPath = outputPath.replace(/\.html$/, '');
+  const finalPath = path.join(dirPath, 'index.html');
+  
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+  
+  fs.writeFileSync(finalPath, fullHTML);
+  console.log(`Generated: ${finalPath}`);
 }
 
-// Process taxonomies with base path
-// Process taxonomies with base path
+// Process taxonomies with clean URLs
 async function processTaxonomies(allItems, basePath) {
   if (!config.taxonomies || !Array.isArray(config.taxonomies)) return;
 
@@ -111,15 +117,14 @@ async function processTaxonomies(allItems, basePath) {
       }
     }
 
-    // Generate term pages
+    // Generate term pages with clean URLs
     for (const [termSlug, termData] of termsMap) {
       const { name, items } = termData;
       
       if (config.pagination) {
         const itemsPerPage = config.pagination.itemsPerPage;
         const totalPages = Math.ceil(items.length / itemsPerPage);
-        // Remove the term slug from the pattern since we're already in the term directory
-        const filenamePattern = config.pagination.filenamePattern || 'page-*.index.html';
+        const filenamePattern = config.pagination.filenamePattern || 'page-*';
 
         for (let page = 1; page <= totalPages; page++) {
           const pageItems = items.slice((page - 1) * itemsPerPage, page * itemsPerPage);
@@ -127,10 +132,9 @@ async function processTaxonomies(allItems, basePath) {
           
           const outputPath = path.join(
             taxonomyDir,
-            page === 1 ? `${termSlug}.index.html` : `${termSlug}/page-${page}.index.html`
+            page === 1 ? termSlug : `${termSlug}/page-${page}`
           );
           
-          // Ensure the term directory exists for paginated pages
           if (page > 1 && !fs.existsSync(path.join(taxonomyDir, termSlug))) {
             fs.mkdirSync(path.join(taxonomyDir, termSlug), { recursive: true });
           }
@@ -146,7 +150,7 @@ async function processTaxonomies(allItems, basePath) {
           items: items, 
           term: name,
           taxonomy: taxonomy 
-        }, path.join(taxonomyDir, `${termSlug}.index.html`));
+        }, path.join(taxonomyDir, termSlug));
       }
     }
 
@@ -160,7 +164,7 @@ async function processTaxonomies(allItems, basePath) {
     generateHTML('terms', { 
       terms: termsList,
       taxonomy: taxonomy 
-    }, path.join(taxonomyDir, 'index.html'));
+    }, path.join(taxonomyDir, ''));
   }
 }
 
@@ -180,35 +184,38 @@ async function generateSite() {
       fs.mkdirSync(basePath, { recursive: true });
     }
 
-    // Generate individual pages
+    // Generate individual pages with clean URLs
     for (const item of allItems) {
       const itemSlug = item.slug || slugify(item.title || 'untitled');
-generateHTML('single', item, path.join(basePath, itemSlug));
+      generateHTML('single', item, path.join(basePath, itemSlug));
     }
 
-    // Generate paginated list pages
+    // Generate paginated list pages with clean URLs
     if (config.pagination) {
       const itemsPerPage = config.pagination.itemsPerPage;
       const totalPages = Math.ceil(allItems.length / itemsPerPage);
-      const filenamePattern = config.pagination.filenamePattern || 'page-*.index.html';
+      const filenamePattern = config.pagination.filenamePattern || 'page-*';
 
       for (let page = 1; page <= totalPages; page++) {
         const pageItems = allItems.slice((page - 1) * itemsPerPage, page * itemsPerPage);
         const paginationHTML = getPaginationHTML(page, totalPages, filenamePattern);
         const outputPath = path.join(
           basePath,
-          page === 1 ? 'index.html' : filenamePattern.replace('*', page)
+          page === 1 ? '' : filenamePattern.replace('*', page)
         );
         generateHTML('list', { items: pageItems }, outputPath, paginationHTML);
       }
     } else {
-      generateHTML('list', { items: allItems }, path.join(basePath, 'index.html'));
+      generateHTML('list', { items: allItems }, path.join(basePath, ''));
     }
 
-    // Process taxonomies
+    // Process taxonomies with clean URLs
     await processTaxonomies(allItems, basePath);
 
-    console.log('Site generation complete!');
+    // Create a .nojekyll file for GitHub Pages
+    fs.writeFileSync(path.join(config.outputDir, '.nojekyll'), '');
+    
+    console.log('Site generation complete with clean URLs!');
   } catch (error) {
     console.error('Error generating site:', error);
   }
