@@ -10,7 +10,14 @@
         `).join(', ')}
       </p>
     ` : ''}
-    
+
+ ${data.aliases ? `
+      <div class="aliases">
+        <h3>Aliases</h3>
+        <p>${data.aliases}</p>
+      </div>
+    ` : ''}
+   
     ${data.description ? `
       <div class="description">
         <h3>Description</h3>
