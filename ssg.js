@@ -119,7 +119,7 @@ async function processTaxonomies(allItems, basePath) {
         const itemsPerPage = config.pagination.itemsPerPage;
         const totalPages = Math.ceil(items.length / itemsPerPage);
         // Remove the term slug from the pattern since we're already in the term directory
-        const filenamePattern = config.pagination.filenamePattern || 'page-*.html';
+        const filenamePattern = config.pagination.filenamePattern || 'page-*.index.html';
 
         for (let page = 1; page <= totalPages; page++) {
           const pageItems = items.slice((page - 1) * itemsPerPage, page * itemsPerPage);
@@ -127,7 +127,7 @@ async function processTaxonomies(allItems, basePath) {
           
           const outputPath = path.join(
             taxonomyDir,
-            page === 1 ? `${termSlug}.html` : `${termSlug}/page-${page}.html`
+            page === 1 ? `${termSlug}.index.html` : `${termSlug}/page-${page}.index.html`
           );
           
           // Ensure the term directory exists for paginated pages
@@ -146,7 +146,7 @@ async function processTaxonomies(allItems, basePath) {
           items: items, 
           term: name,
           taxonomy: taxonomy 
-        }, path.join(taxonomyDir, `${termSlug}.html`));
+        }, path.join(taxonomyDir, `${termSlug}.index.html`));
       }
     }
 
@@ -183,14 +183,14 @@ async function generateSite() {
     // Generate individual pages
     for (const item of allItems) {
       const itemSlug = item.slug || slugify(item.title || 'untitled');
-      generateHTML('single', item, path.join(basePath, `${itemSlug}.html`));
+      generateHTML('single', item, path.join(basePath, `${itemSlug}.index.html`));
     }
 
     // Generate paginated list pages
     if (config.pagination) {
       const itemsPerPage = config.pagination.itemsPerPage;
       const totalPages = Math.ceil(allItems.length / itemsPerPage);
-      const filenamePattern = config.pagination.filenamePattern || 'page-*.html';
+      const filenamePattern = config.pagination.filenamePattern || 'page-*.index.html';
 
       for (let page = 1; page <= totalPages; page++) {
         const pageItems = allItems.slice((page - 1) * itemsPerPage, page * itemsPerPage);
