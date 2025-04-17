@@ -118,13 +118,12 @@ async function processTaxonomies(allItems, basePath) {
       if (config.pagination) {
         const itemsPerPage = config.pagination.itemsPerPage;
         const totalPages = Math.ceil(items.length / itemsPerPage);
+        // Remove the term slug from the pattern since we're already in the term directory
         const filenamePattern = config.pagination.filenamePattern || 'page-*.html';
 
         for (let page = 1; page <= totalPages; page++) {
           const pageItems = items.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-          // Create a custom filename pattern that includes the term slug
-          const termFilenamePattern = `${termSlug}/page-*.html`;
-          const paginationHTML = getPaginationHTML(page, totalPages, termFilenamePattern);
+          const paginationHTML = getPaginationHTML(page, totalPages, filenamePattern);
           
           const outputPath = path.join(
             taxonomyDir,
