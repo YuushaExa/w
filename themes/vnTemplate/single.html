@@ -11,10 +11,10 @@
       </p>
     ` : ''}
 
- ${data.aliases ? `
+ ${data.aliases && data.aliases.length > 0 ? `
       <div class="aliases">
         <h3>Aliases</h3>
-        <p>${data.aliases}</p>
+        <p>${data.aliases.join(', ')}</p>
       </div>
     ` : ''}
    
