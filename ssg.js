@@ -80,6 +80,7 @@ function generateHTML(templateName, data, outputPath, pagination = '') {
 }
 
 // Process taxonomies with base path
+// Process taxonomies with base path
 async function processTaxonomies(allItems, basePath) {
   if (!config.taxonomies || !Array.isArray(config.taxonomies)) return;
 
@@ -93,7 +94,6 @@ async function processTaxonomies(allItems, basePath) {
 
     const termsMap = new Map();
 
-    // Collect terms and items (unchanged)
     for (const item of allItems) {
       if (item[taxonomy] && Array.isArray(item[taxonomy])) {
         for (const term of item[taxonomy]) {
@@ -111,22 +111,30 @@ async function processTaxonomies(allItems, basePath) {
       }
     }
 
-    // Generate term pages (simplified)
+    // Generate term pages
     for (const [termSlug, termData] of termsMap) {
       const { name, items } = termData;
       
       if (config.pagination) {
         const itemsPerPage = config.pagination.itemsPerPage;
         const totalPages = Math.ceil(items.length / itemsPerPage);
+        const filenamePattern = config.pagination.filenamePattern || 'page-*.html';
 
         for (let page = 1; page <= totalPages; page++) {
           const pageItems = items.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-          const paginationHTML = getPaginationHTML(page, totalPages, `page-*.html`);
+          // Create a custom filename pattern that includes the term slug
+          const termFilenamePattern = `${termSlug}/page-*.html`;
+          const paginationHTML = getPaginationHTML(page, totalPages, termFilenamePattern);
           
           const outputPath = path.join(
             taxonomyDir,
-            `${termSlug}${page === 1 ? '.html' : `-page-${page}.html`}`
+            page === 1 ? `${termSlug}.html` : `${termSlug}/page-${page}.html`
           );
+          
+          // Ensure the term directory exists for paginated pages
+          if (page > 1 && !fs.existsSync(path.join(taxonomyDir, termSlug))) {
+            fs.mkdirSync(path.join(taxonomyDir, termSlug), { recursive: true });
+          }
           
           generateHTML('taxonomy', { 
             items: pageItems, 
@@ -143,7 +151,7 @@ async function processTaxonomies(allItems, basePath) {
       }
     }
 
-    // Generate terms list page (unchanged)
+    // Generate terms list page
     const termsList = Array.from(termsMap.entries()).map(([slug, termData]) => ({
       name: termData.name,
       slug: slug,
