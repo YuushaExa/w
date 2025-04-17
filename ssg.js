@@ -80,6 +80,7 @@ function generateHTML(templateName, data, outputPath, pagination = '') {
 }
 
 // Process taxonomies with base path
+// Process taxonomies with base path
 async function processTaxonomies(allItems, basePath) {
   if (!config.taxonomies || !Array.isArray(config.taxonomies)) return;
 
@@ -121,11 +122,20 @@ async function processTaxonomies(allItems, basePath) {
 
         for (let page = 1; page <= totalPages; page++) {
           const pageItems = items.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-          const paginationHTML = getPaginationHTML(page, totalPages, filenamePattern);
+          // Create a custom filename pattern that includes the term slug
+          const termFilenamePattern = `${termSlug}/page-*.html`;
+          const paginationHTML = getPaginationHTML(page, totalPages, termFilenamePattern);
+          
           const outputPath = path.join(
             taxonomyDir,
-            page === 1 ? `${termSlug}.html` : `${termSlug}-${page}.html`
+            page === 1 ? `${termSlug}.html` : `${termSlug}/page-${page}.html`
           );
+          
+          // Ensure the term directory exists for paginated pages
+          if (page > 1 && !fs.existsSync(path.join(taxonomyDir, termSlug))) {
+            fs.mkdirSync(path.join(taxonomyDir, termSlug), { recursive: true });
+          }
+          
           generateHTML('taxonomy', { 
             items: pageItems, 
             term: name,
