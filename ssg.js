@@ -212,8 +212,7 @@ async function generateSite() {
     // Process taxonomies with clean URLs
     await processTaxonomies(allItems, basePath);
 
-    // Create a .nojekyll file for GitHub Pages
-    fs.writeFileSync(path.join(config.outputDir, '.nojekyll'), '');
+  
     
     console.log('Site generation complete with clean URLs!');
   } catch (error) {
