@@ -80,7 +80,6 @@ function generateHTML(templateName, data, outputPath, pagination = '') {
 }
 
 // Process taxonomies with base path
-// Process taxonomies with base path
 async function processTaxonomies(allItems, basePath) {
   if (!config.taxonomies || !Array.isArray(config.taxonomies)) return;
 
