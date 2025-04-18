@@ -193,6 +193,8 @@ if (fs.existsSync(notFoundTemplatePath)) {
     fs.writeFileSync(path.join(config.outputDir, '404.html'), notFoundTemplate);
     console.log('Generated: 404.html');
 }
+
+    generateHTML('customGames', customGamesData, path.join(config.outputDir, 'games.html'));
     
     // Generate paginated list pages
     if (config.pagination) {
