@@ -205,12 +205,12 @@ if (fs.existsSync(notFoundTemplatePath)) {
         const paginationHTML = getPaginationHTML(page, totalPages, filenamePattern);
         const outputPath = path.join(
           basePath,
-          page === 1 ? '/' : filenamePattern.replace('*', page)
+          page === 1 ? 'index.html' : filenamePattern.replace('*', page)
         );
         generateHTML('list', { items: pageItems }, outputPath, paginationHTML);
       }
     } else {
-      generateHTML('list', { items: allItems }, path.join(basePath, '/'));
+      generateHTML('list', { items: allItems }, path.join(basePath, 'index.html'));
     }
 
     // Process taxonomies
