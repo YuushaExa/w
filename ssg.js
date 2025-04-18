@@ -193,13 +193,6 @@ if (fs.existsSync(notFoundTemplatePath)) {
     fs.writeFileSync(path.join(config.outputDir, '404.html'), notFoundTemplate);
     console.log('Generated: 404.html');
 }
-
-const notFoundGamesTemplatePath = path.join('themes', config.template, 'games.html');
-if (fs.existsSync(notFoundGamesTemplatePath)) {
-    const notFoundGamesTemplatePath = fs.readFileSync(notFoundGamesTemplatePath, 'utf8');
-    fs.writeFileSync(path.join(config.outputDir, 'games.html'), notFoundGamesTemplatePath);
-    console.log('Generated: games.html');
-}
     
     // Generate paginated list pages
     if (config.pagination) {
