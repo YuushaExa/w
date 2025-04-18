@@ -3,60 +3,11 @@
 <head>
     <title>404 Not Found</title>
     <script>
-        // Enhanced redirect logic
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentPath = window.location.pathname;
-            const searchParams = new URLSearchParams(window.location.search);
-            
-            // Common redirect cases
-            const redirectMap = {
-                '/w/games': '/w/games/index.html',
-                '/games': '/w/games/index.html',
-                '/w': '/w/games/index.html'
-            };
-            
-            // Check if current path matches any redirect case
-            for (const [fromPath, toPath] of Object.entries(redirectMap)) {
-                if (currentPath === fromPath) {
-                    window.location.href = toPath;
-                    return;
-                }
-            }
-            
-            // Handle common missing extensions
-            if (!currentPath.endsWith('.html') && !currentPath.endsWith('/')) {
-                // Try adding .html
-                fetch(currentPath + '.html', { method: 'HEAD' })
-                    .then(response => {
-                        if (response.ok) {
-                            window.location.href = currentPath + '.html';
-                        } else {
-                            // Try adding /index.html
-                            fetch(currentPath + '/index.html', { method: 'HEAD' })
-                                .then(response => {
-                                    if (response.ok) {
-                                        window.location.href = currentPath + '/index.html';
-                                    }
-                                });
-                        }
-                    });
-            }
-            
-            // Handle pagination redirects (e.g., /page/1 → /page-1.html)
-            const pageMatch = currentPath.match(/(.*\/)page\/(\d+)/);
-            if (pageMatch) {
-                const newPath = `${pageMatch[1]}page-${pageMatch[2]}.html`;
-                window.location.href = newPath;
-            }
-            
-            // Log 404 to analytics if available
-            if (typeof gtag !== 'undefined') {
-                gtag('event', '404', {
-                    'page_path': currentPath,
-                    'referrer': document.referrer
-                });
-            }
-        });
+     if (window.location.pathname === '/w/games/' || 
+    window.location.pathname === '/w/games') {
+    window.location.href = '/w/games/index.html';
+    return; // Stop further execution
+}
     </script>
     <style>
         body {
