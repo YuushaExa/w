@@ -1,79 +1,57 @@
 <div class="pagination">
-  <!-- Previous Link -->
   ${currentPage > 1 ? `
-    <a href="${getPageLink(currentPage - 1)}" class="prev">‹ Prev</a>
+    <a href="${currentPage === 2 ? '.html' : filenamePattern.replace('*', currentPage - 1)}" class="prev">‹ Prev</a>
   ` : ''}
 
-  <!-- First Page + Ellipsis -->
+  <!-- Always show first page -->
   ${currentPage > 4 ? `
-    <a href="${getPageLink(1)}">1</a>
+    <a href="index.html">1</a>
     ${currentPage > 5 ? `<span class="ellipsis">…</span>` : ''}
   ` : ''}
 
-  <!-- Page Numbers -->
-  ${getPageRange().map(page => `
+  <!-- Show surrounding pages -->
+  ${Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
+    let page;
+    if (currentPage <= 4) {
+      page = i + 1;
+    } else if (currentPage >= totalPages - 3) {
+      page = totalPages - 6 + i;
+    } else {
+      page = currentPage - 3 + i;
+    }
+    return page;
+  }).filter(page => page >= 1 && page <= totalPages).map(page => `
     ${page === currentPage ? `
       <span class="current">${page}</span>
     ` : `
-      <a href="${getPageLink(page)}">${page}</a>
+      <a href="${page === 1 ? '.html' : filenamePattern.replace('*', page)}">${page}</a>
     `}
   `).join('')}
 
-  <!-- Last Page + Ellipsis -->
+  <!-- Always show last page -->
   ${currentPage < totalPages - 3 ? `
     ${currentPage < totalPages - 4 ? `<span class="ellipsis">…</span>` : ''}
-    <a href="${getPageLink(totalPages)}">${totalPages}</a>
+    <a href="${filenamePattern.replace('*', totalPages)}">${totalPages}</a>
   ` : ''}
 
-  <!-- Next Link -->
   ${currentPage < totalPages ? `
-    <a href="${getPageLink(currentPage + 1)}" class="next">Next ›</a>
+    <a href="${filenamePattern.replace('*', currentPage + 1)}" class="next">Next ›</a>
   ` : ''}
 </div>
-
-<script>
-  // Helper function to generate page links
-  function getPageLink(page) {
-    if (page === 1) return ''; // Homepage
-    return filenamePattern.replace('*', page);
-  }
-
-  // Helper function to calculate page range
-  function getPageRange() {
-    const visiblePages = 7;
-    let start = Math.max(1, currentPage - 3);
-    let end = Math.min(totalPages, start + visiblePages - 1);
-    
-    // Adjust if we're at the end
-    if (end === totalPages) {
-      start = Math.max(1, end - visiblePages + 1);
-    }
-    
-    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-  }
-</script>
-
 <style>
   .pagination {
     display: flex;
     gap: 5px;
     margin: 20px 0;
     justify-content: center;
-    flex-wrap: wrap;
   }
-  .pagination a, .pagination span {
+  .pagination a {
     padding: 5px 10px;
     border: 1px solid #ddd;
     text-decoration: none;
-    display: inline-block;
   }
-  .pagination .current {
+  .pagination a.active {
     background: #333;
     color: white;
-    border-color: #333;
-  }
-  .pagination .ellipsis {
-    border: none;
-    pointer-events: none;
   }
 </style>
