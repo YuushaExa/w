@@ -10,7 +10,6 @@ function slugify(input, existingSlugs = new Set()) {
     .normalize('NFKD') // Normalize Unicode
     .replace(/\s+/g, '-') // Replace spaces with -
     .replace(/[^\w\-]+/g, '') // Remove non-word chars
-    .replace(/[\*]+/g, '')          // Specifically remove asterisks
     .replace(/\-\-+/g, '-') // Replace multiple - with single -
     .replace(/^-+/, '') // Trim - from start
     .replace(/-+$/, ''); // Trim - from end
@@ -162,26 +161,22 @@ async function processTaxonomies(allItems, basePath) {
       if (config.pagination) {
         const itemsPerPage = config.pagination.itemsPerPage;
         const totalPages = Math.ceil(items.length / itemsPerPage);
-        const filenamePattern = config.pagination.filenamePattern || 'page-*/index.html';
+        const filenamePattern = config.pagination.filenamePattern || 'page-*.html';
 
         for (let page = 1; page <= totalPages; page++) {
           const pageItems = items.slice((page - 1) * itemsPerPage, page * itemsPerPage);
           // Create a custom filename pattern that includes the term slug
-          const termFilenamePattern = `${termSlug}/page-*/index.html`;
+          const termFilenamePattern = `${termSlug}/page-*.html`;
           const paginationHTML = getPaginationHTML(page, totalPages, termFilenamePattern);
           
           const outputPath = path.join(
             taxonomyDir,
-            page === 1 ? `${termSlug}/index.html` : `${termSlug}/page-${page}/index.html`
+            page === 1 ? `${termSlug}.html` : `${termSlug}/page-${page}.html`
           );
           
           // Ensure the term directory exists for paginated pages
-          const termPageDir = page === 1 
-            ? path.join(taxonomyDir, termSlug)
-            : path.join(taxonomyDir, termSlug, `page-${page}`);
-            
-          if (!fs.existsSync(termPageDir)) {
-            fs.mkdirSync(termPageDir, { recursive: true });
+          if (page > 1 && !fs.existsSync(path.join(taxonomyDir, termSlug))) {
+            fs.mkdirSync(path.join(taxonomyDir, termSlug), { recursive: true });
           }
           
           generateHTML('taxonomy', { 
@@ -191,16 +186,11 @@ async function processTaxonomies(allItems, basePath) {
           }, outputPath, paginationHTML);
         }
       } else {
-        const termDir = path.join(taxonomyDir, termSlug);
-        if (!fs.existsSync(termDir)) {
-          fs.mkdirSync(termDir, { recursive: true });
-        }
-        
         generateHTML('taxonomy', { 
           items: items, 
           term: name,
           taxonomy: taxonomy 
-        }, path.join(termDir, 'index.html'));
+        }, path.join(taxonomyDir, `${termSlug}.html`));
       }
     }
 
