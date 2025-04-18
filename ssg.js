@@ -17,6 +17,7 @@ function slugify(input) {
     .toLowerCase()                   // Convert to lowercase
     .trim()                          // Trim whitespace
     .replace(/\s+/g, '-')            // Replace spaces with -
+          .replace(/[\*]+/g, 'n')          // Specifically remove asterisks
     .replace(/[^\p{L}\p{N}-]+/gu, '') // Remove non-letters/non-numbers (Unicode-aware)
     .replace(/-+/g, '-')             // Replace multiple - with single -
     .replace(/^-|-$/g, '');          // Trim - from start and end
