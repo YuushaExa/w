@@ -198,12 +198,12 @@ async function generateSite() {
         const paginationHTML = getPaginationHTML(page, totalPages, filenamePattern);
         const outputPath = path.join(
           basePath,
-          page === 1 ? '.html' : filenamePattern.replace('*', page)
+          page === 1 ? '/' : filenamePattern.replace('*', page)
         );
         generateHTML('list', { items: pageItems }, outputPath, paginationHTML);
       }
     } else {
-      generateHTML('list', { items: allItems }, path.join(basePath, '.html'));
+      generateHTML('list', { items: allItems }, path.join(basePath, '/'));
     }
 
     // Process taxonomies
