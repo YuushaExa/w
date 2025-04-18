@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>404 Not Found</title>
+    <script>
+     if (window.location.pathname === '/w/games/' || 
+    window.location.pathname === '/w/games') {
+    window.location.href = '/w/games/index.html';
+    return; // Stop further execution
+}
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #d9534f;
+        }
+        .search-box {
+            margin: 20px 0;
+        }
+        input[type="text"] {
+            padding: 8px;
+            width: 300px;
+        }
+        button {
+            padding: 8px 16px;
+            background: #337ab7;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>404 - Page Not Found</h1>
+    <p>We couldn't find the page you're looking for.</p>
+    
+    <div class="search-box">
+        <p>Try searching our site:</p>
+        <input type="text" id="searchInput" placeholder="Search...">
+        <button onclick="searchSite()">Search</button>
+    </div>
+    
+    <p><a href="/w/games/index.html">Return to homepage</a></p>
+    
+    <script>
+        function searchSite() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (query) {
+                window.location.href = `/w/games/index.html?search=${encodeURIComponent(query)}`;
+            }
+        }
+        
+        // Capture Enter key in search box
+        document.getElementById('searchInput').addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                searchSite();
+            }
+        });
+    </script>
+</body>
+</html>
