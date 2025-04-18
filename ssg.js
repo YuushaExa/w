@@ -187,6 +187,13 @@ async function generateSite() {
       generateHTML('single', item, path.join(basePath, `${itemSlug}.html`));
     }
 
+const notFoundTemplatePath = path.join('themes', config.template, '404.html');
+if (fs.existsSync(notFoundTemplatePath)) {
+    const notFoundTemplate = fs.readFileSync(notFoundTemplatePath, 'utf8');
+    fs.writeFileSync(path.join(config.outputDir, '404.html'), notFoundTemplate);
+    console.log('Generated: 404.html');
+}
+    
     // Generate paginated list pages
     if (config.pagination) {
       const itemsPerPage = config.pagination.itemsPerPage;
