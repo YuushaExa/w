@@ -133,8 +133,14 @@ async function processTaxonomies(allItems, basePath) {
           const pageItems = items.slice((page - 1) * itemsPerPage, page * itemsPerPage);
           // Create a custom filename pattern that includes the term slug
           const termFilenamePattern = `${termSlug}/page-*.html`;
-          const paginationHTML = getPaginationHTML(page, totalPages, termFilenamePattern);
-          
+const paginationHTML = getPaginationHTML(
+  page, 
+  totalPages, 
+  filenamePattern, 
+  config.path ? `${slugify(config.path)}/` : '',
+  config,
+  slugify
+);          
           const outputPath = path.join(
             taxonomyDir,
             page === 1 ? `${termSlug}.html` : `${termSlug}/page-${page}.html`
@@ -220,8 +226,14 @@ async function generateSite() {
           actualFilenamePattern = `${slugify(config.path)}/${filenamePattern}`;
         }
 
-        const paginationHTML = getPaginationHTML(page, totalPages, actualFilenamePattern);
-        
+const paginationHTML = getPaginationHTML(
+  page, 
+  totalPages, 
+  filenamePattern, 
+  config.path ? `${slugify(config.path)}/` : '',
+  config,
+  slugify
+);        
         // Determine output path
         let outputPath;
         if (config.path) {
