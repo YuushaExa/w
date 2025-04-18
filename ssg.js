@@ -44,14 +44,21 @@ async function fetchData(url) {
 
 // Generate pagination HTML
 function getPaginationHTML(currentPage, totalPages, filenamePattern) {
+  // Extract the path prefix if it exists
+  let pathPrefix = '';
+  if (filenamePattern.includes('/')) {
+    pathPrefix = filenamePattern.split('/')[0] + '/';
+    filenamePattern = filenamePattern.split('/')[1];
+  }
+
   return new Function(
     'currentPage', 
     'totalPages',
     'filenamePattern',
+    'pathPrefix',
     `return \`${templates.pagination}\``
-  )(currentPage, totalPages, filenamePattern);
+  )(currentPage, totalPages, filenamePattern, pathPrefix);
 }
-
 // Generate HTML with template literals
 function generateHTML(templateName, data, outputPath, pagination = '') {
   const template = templates[templateName];
