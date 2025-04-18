@@ -209,9 +209,7 @@ if (fs.existsSync(notFoundTemplatePath)) {
         );
         generateHTML('list', { items: pageItems }, outputPath, paginationHTML);
       }
-    } else {
-      generateHTML('list', { items: allItems }, path.join(basePath, 'index.html'));
-    }
+    } 
 
     // Process taxonomies
     await processTaxonomies(allItems, basePath);
