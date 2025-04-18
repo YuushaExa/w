@@ -15,6 +15,7 @@ function slugify(input) {
     return input
       .toLowerCase()
       .replace(/\s+/g, '-')           // Replace spaces with -
+          .replace(/\*\*+/g, '')          // Remove asterisks
       .replace(/\-\-+/g, '-')         // Replace multiple - with single -
       .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
       .replace(/^-+/, '')             // Trim - from start of text
