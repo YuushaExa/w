@@ -165,7 +165,6 @@ async function processTaxonomies(allItems, basePath) {
 }
 
 // Main generation function
-// Main generation function
 async function generateSite() {
   try {
     // Load data
@@ -180,7 +179,7 @@ async function generateSite() {
       fs.mkdirSync(config.outputDir, { recursive: true });
     }
 
-    // Generate individual pages in a subdirectory if path is specified
+    // Create games directory if path is specified
     const basePath = config.path ? path.join(config.outputDir, slugify(config.path)) : config.outputDir;
     if (config.path && !fs.existsSync(basePath)) {
       fs.mkdirSync(basePath, { recursive: true });
@@ -189,9 +188,7 @@ async function generateSite() {
     // Generate individual pages
     for (const item of allItems) {
       const itemSlug = item.slug || slugify(item.title || 'untitled');
-      const itemPath = config.path 
-        ? path.join(basePath, `${itemSlug}.html`) 
-        : path.join(config.outputDir, `${itemSlug}.html`);
+      const itemPath = path.join(basePath, `${itemSlug}.html`);
       generateHTML('single', item, itemPath);
     }
 
@@ -203,27 +200,46 @@ async function generateSite() {
 
       for (let page = 1; page <= totalPages; page++) {
         const pageItems = allItems.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-        const paginationHTML = getPaginationHTML(page, totalPages, filenamePattern);
         
-        // Main page is games.html, paginated pages go in games/page-*.html
-        const outputPath = config.path
-          ? page === 1 
-            ? path.join(config.outputDir, `${slugify(config.path)}.html`)
-            : path.join(basePath, filenamePattern.replace('*', page))
-          : page === 1
+        // Customize the filename pattern based on whether we have a path
+        let actualFilenamePattern = filenamePattern;
+        let paginationPathPrefix = '';
+        
+        if (config.path) {
+          paginationPathPrefix = `${slugify(config.path)}/`;
+          actualFilenamePattern = `${slugify(config.path)}/${filenamePattern}`;
+        }
+
+        const paginationHTML = getPaginationHTML(page, totalPages, actualFilenamePattern);
+        
+        // Determine output path
+        let outputPath;
+        if (config.path) {
+          if (page === 1) {
+            // Main page goes to /games.html
+            outputPath = path.join(config.outputDir, `${slugify(config.path)}.html`);
+          } else {
+            // Paginated pages go to /games/page-2.html, etc.
+            outputPath = path.join(config.outputDir, `${slugify(config.path)}`, `page-${page}.html`);
+          }
+        } else {
+          // No path config - use default behavior
+          outputPath = page === 1 
             ? path.join(config.outputDir, 'index.html')
-            : path.join(config.outputDir, filenamePattern.replace('*', page));
-        
+            : path.join(config.outputDir, `page-${page}.html`);
+        }
+
         generateHTML('list', { items: pageItems }, outputPath, paginationHTML);
       }
     } else {
+      // Non-paginated version
       const outputPath = config.path
         ? path.join(config.outputDir, `${slugify(config.path)}.html`)
         : path.join(config.outputDir, 'index.html');
       generateHTML('list', { items: allItems }, outputPath);
     }
 
-    // Process taxonomies (they should still go in the games/ subdirectory)
+    // Process taxonomies (they go in the games/ subdirectory)
     if (config.path) {
       await processTaxonomies(allItems, basePath);
     } else {
