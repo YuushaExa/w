@@ -13,13 +13,13 @@ function slugify(input) {
     }
     
     return input
-      .toLowerCase()
-      .replace(/\s+/g, '-')           // Replace spaces with -
-          .replace(/\*\*+/g, 'c')          // Remove asterisks
-      .replace(/\-\-+/g, '-')         // Replace multiple - with single -
-      .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
-      .replace(/^-+/, '')             // Trim - from start of text
-      .replace(/-+$/, '');            // Trim - from end of text
+ .normalize('NFKD')               // Normalize Unicode
+    .toLowerCase()                   // Convert to lowercase
+    .trim()                          // Trim whitespace
+    .replace(/\s+/g, '-')            // Replace spaces with -
+    .replace(/[^\p{L}\p{N}-]+/gu, '') // Remove non-letters/non-numbers (Unicode-aware)
+    .replace(/-+/g, '-')             // Replace multiple - with single -
+    .replace(/^-|-$/g, '');          // Trim - from start and end
   } catch (error) {
     console.error('Slugify error:', error);
     return 'untitled';
