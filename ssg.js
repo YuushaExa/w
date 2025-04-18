@@ -52,12 +52,15 @@ function getPaginationHTML(currentPage, totalPages, filenamePattern) {
   }
 
   return new Function(
-    'currentPage', 
+       'currentPage', 
     'totalPages',
     'filenamePattern',
     'pathPrefix',
+    'config',
+    'slugify',
     `return \`${templates.pagination}\``
-  )(currentPage, totalPages, filenamePattern, pathPrefix);
+  )(currentPage, totalPages, filenamePattern, pathPrefix, config, slugify);
+  
 }
 // Generate HTML with template literals
 function generateHTML(templateName, data, outputPath, pagination = '') {
