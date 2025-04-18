@@ -171,7 +171,7 @@ async function processTaxonomies(allItems, basePath) {
           
           const outputPath = path.join(
             taxonomyDir,
-            page === 1 ? `${termSlug}/index.html` : `${termSlug}/page-${page}.html`
+            page === 1 ? `${termSlug}.html` : `${termSlug}/page-${page}.html`
           );
           
           // Ensure the term directory exists for paginated pages
