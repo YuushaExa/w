@@ -4,6 +4,7 @@ const https = require('https');
 
 // Basic slugify function
 function slugify(input) {
+  // Keep existing implementation
   return String(input)
     .toLowerCase()
     .replace(/\s+/g, '-')           // Replace spaces with -
@@ -21,6 +22,43 @@ if (!fs.existsSync(config.outputDir)) {
   fs.mkdirSync(config.outputDir, { recursive: true });
 }
 
+// --- URL Generation Helper ---
+const siteBasePath = config.path ? `/${slugify(config.path)}` : '';
+
+function generateUrl(logicalPath) {
+  // Ensure leading slash and combine with site base path
+  let fullPath = path.join(siteBasePath, logicalPath).replace(/\\/g, '/'); // Use forward slashes
+
+  // Remove trailing 'index.html'
+  if (fullPath.endsWith('/index.html')) {
+    fullPath = fullPath.substring(0, fullPath.length - 'index.html'.length);
+  }
+
+  // Ensure trailing slash for directory-like paths (ending with / or was index.html)
+  // But avoid double slash at the root
+  if (!fullPath.endsWith('/') && !path.basename(fullPath).includes('.')) {
+     if (fullPath !== '') { // Avoid adding trailing slash if it's just the base path root ""
+         fullPath += '/';
+     }
+  }
+
+   // Handle the absolute root case explicitly
+   if (logicalPath === '/' || logicalPath === '/index.html') {
+       return siteBasePath ? siteBasePath + '/' : '/';
+   }
+   // Ensure it starts with a slash if not empty
+   if (fullPath && !fullPath.startsWith('/')) {
+       fullPath = '/' + fullPath;
+   }
+
+  // Special case: if siteBasePath is empty and path is '/', return '/'
+  if (!siteBasePath && fullPath === '') return '/';
+
+
+  return fullPath || '/'; // Return '/' if path calculation results in empty string
+}
+
+
 // Load templates
 const templates = {
   base: fs.readFileSync(path.join('themes', config.template, 'baseof.html'), 'utf8'),
@@ -33,6 +71,7 @@ const templates = {
 
 // Fetch data helper
 async function fetchData(url) {
+  // Keep existing implementation
   return new Promise((resolve, reject) => {
     https.get(url, (res) => {
       let data = '';
@@ -43,63 +82,92 @@ async function fetchData(url) {
 }
 
 // Generate pagination HTML
-function getPaginationHTML(currentPage, totalPages, filenamePattern) {
-  return new Function(
-    'currentPage', 
-    'totalPages',
-    'filenamePattern',
-    `return \`${templates.pagination}\``
-  )(currentPage, totalPages, filenamePattern);
+// Now takes baseLinkPath and the generateUrl helper
+function getPaginationHTML(currentPage, totalPages, baseLinkPath, filenamePattern) {
+  // The pagination template itself needs to be adapted to use generateUrl correctly
+  // We pass generateUrl and baseLinkPath into its execution context.
+  // filenamePattern should now *not* include '.html' if it's for page > 1 links that should be clean
+  // Example: filenamePattern could be 'page-*'
+    
+  // Modify the template execution to include generateUrl and baseLinkPath
+  const paginationTemplateRunner = new Function(
+      'currentPage',
+      'totalPages',
+      'baseLinkPath',
+      'filenamePattern',
+      'generateUrl', // Make helper available inside pagination template
+      ` return \`${templates.pagination}\`;`
+  );
+
+  return paginationTemplateRunner(
+      currentPage,
+      totalPages,
+      baseLinkPath, // e.g., "/", "/posts/", "/tags/news/"
+      filenamePattern, // e.g., "page-*"
+      generateUrl // Pass the helper function
+  );
 }
+
 
 // Generate HTML with template literals
 function generateHTML(templateName, data, outputPath, pagination = '') {
   const template = templates[templateName];
-  
+
   // Create a context object with data, pagination, and our helper functions
   const context = {
     ...data,
     pagination,
-    slugify: (input) => slugify(input)  // Add slugify directly to the context
+    slugify: slugify, // Add slugify
+    generateUrl: generateUrl // Add URL generator
   };
 
-  // Modified template evaluation to include our context
+  // Evaluate the specific page template (list, single, etc.)
   const content = new Function(
-    'data', 
+    'data',
     `with(data) { return \`${template}\` }`
   )(context);
 
-  // Also make slugify available in the base template
+  // Evaluate the base template, passing the generated content and the context
   const fullHTML = new Function(
-    'data', 
+    'data',
     `with(data) { return \`${templates.base}\` }`
-  )({ ...context, content });
+  )({ ...context, content }); // Ensure helpers are available in baseof.html too
+
+  // Ensure directory exists before writing file
+  const outputDir = path.dirname(outputPath);
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
 
   fs.writeFileSync(outputPath, fullHTML);
   console.log(`Generated: ${outputPath}`);
 }
 
 // Process taxonomies with base path
-// Process taxonomies with base path
-async function processTaxonomies(allItems, basePath) {
+async function processTaxonomies(allItems, contentBasePath) { // Renamed basePath to contentBasePath for clarity
   if (!config.taxonomies || !Array.isArray(config.taxonomies)) return;
 
   for (const taxonomy of config.taxonomies) {
     const taxonomySlug = slugify(taxonomy);
-    const taxonomyDir = path.join(basePath, taxonomySlug);
-    
-    if (!fs.existsSync(taxonomyDir)) {
-      fs.mkdirSync(taxonomyDir, { recursive: true });
+    // Physical directory path for output files
+    const taxonomyOutputDir = path.join(contentBasePath, taxonomySlug);
+     // Logical base path for URL generation within this taxonomy
+    const taxonomyUrlBasePath = `/${taxonomySlug}/`;
+
+
+    if (!fs.existsSync(taxonomyOutputDir)) {
+      fs.mkdirSync(taxonomyOutputDir, { recursive: true });
     }
 
     const termsMap = new Map();
 
+    // Collect terms and associated items
     for (const item of allItems) {
       if (item[taxonomy] && Array.isArray(item[taxonomy])) {
         for (const term of item[taxonomy]) {
-          const termName = term.name || term;
+          const termName = term.name || term; // Handle object or string terms
           const termSlug = slugify(termName);
-          
+
           if (!termsMap.has(termSlug)) {
             termsMap.set(termSlug, {
               name: termName,
@@ -111,57 +179,74 @@ async function processTaxonomies(allItems, basePath) {
       }
     }
 
-    // Generate term pages
+    // Generate term pages (listing items for a specific term)
     for (const [termSlug, termData] of termsMap) {
       const { name, items } = termData;
-      
+      // Logical base path for URLs related to this specific term
+      const termUrlBasePath = `${taxonomyUrlBasePath}${termSlug}/`;
+      // Physical output directory for this specific term's files
+      const termOutputDir = path.join(taxonomyOutputDir, termSlug);
+
       if (config.pagination) {
         const itemsPerPage = config.pagination.itemsPerPage;
         const totalPages = Math.ceil(items.length / itemsPerPage);
-        const filenamePattern = config.pagination.filenamePattern || 'page-*.html';
+        // Use a pattern like "page-*" (without .html) for generateUrl logic
+        const filenamePattern = (config.pagination.filenamePattern || 'page-*').replace('.html', '');
 
         for (let page = 1; page <= totalPages; page++) {
           const pageItems = items.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-          // Create a custom filename pattern that includes the term slug
-          const termFilenamePattern = `${termSlug}/page-*.html`;
-          const paginationHTML = getPaginationHTML(page, totalPages, termFilenamePattern);
-          
+          // Generate pagination HTML using the term's base URL path
+          const paginationHTML = getPaginationHTML(page, totalPages, termUrlBasePath, filenamePattern);
+
+          // Determine the physical output path
           const outputPath = path.join(
-            taxonomyDir,
-            page === 1 ? `${termSlug}.html` : `${termSlug}/page-${page}.html`
+            // Page 1 goes to termSlug/index.html
+            // Other pages go to termSlug/page-N.html
+            termOutputDir,
+            page === 1 ? `index.html` : `${filenamePattern.replace('*', page)}.html`
           );
-          
-          // Ensure the term directory exists for paginated pages
-          if (page > 1 && !fs.existsSync(path.join(taxonomyDir, termSlug))) {
-            fs.mkdirSync(path.join(taxonomyDir, termSlug), { recursive: true });
-          }
-          
-          generateHTML('taxonomy', { 
-            items: pageItems, 
+
+          // Ensure the term directory exists (needed for page > 1)
+           if (!fs.existsSync(termOutputDir)) {
+             fs.mkdirSync(termOutputDir, { recursive: true });
+           }
+
+          generateHTML('taxonomy', {
+            items: pageItems,
             term: name,
-            taxonomy: taxonomy 
+            taxonomy: taxonomy,
+            currentPage: page, // Pass current page info if needed in template
+            totalPages: totalPages
           }, outputPath, paginationHTML);
         }
       } else {
-        generateHTML('taxonomy', { 
-          items: items, 
+        // No pagination: Generate single term page at termSlug/index.html
+         const outputPath = path.join(termOutputDir, `index.html`);
+         if (!fs.existsSync(termOutputDir)) {
+             fs.mkdirSync(termOutputDir, { recursive: true });
+         }
+        generateHTML('taxonomy', {
+          items: items,
           term: name,
-          taxonomy: taxonomy 
-        }, path.join(taxonomyDir, `${termSlug}.html`));
+          taxonomy: taxonomy
+        }, outputPath);
       }
     }
 
-    // Generate terms list page
+    // Generate terms list page (listing all terms for the taxonomy)
     const termsList = Array.from(termsMap.entries()).map(([slug, termData]) => ({
       name: termData.name,
-      slug: slug,
-      count: termData.items.length
+      slug: slug, // The slug for linking
+      count: termData.items.length,
+      // Provide the clean URL directly if needed in the template
+      url: generateUrl(`${taxonomyUrlBasePath}${slug}/`)
     }));
 
-    generateHTML('terms', { 
+    generateHTML('terms', {
       terms: termsList,
-      taxonomy: taxonomy 
-    }, path.join(taxonomyDir, 'index.html'));
+      taxonomy: taxonomy,
+      taxonomySlug: taxonomySlug // Pass slug if needed
+    }, path.join(taxonomyOutputDir, 'index.html')); // Output to taxonomySlug/index.html
   }
 }
 
@@ -175,39 +260,58 @@ async function generateSite() {
       allItems.push(...(Array.isArray(data) ? data : [data]));
     }
 
-    // Create path directory if specified in config
-    const basePath = config.path ? path.join(config.outputDir, slugify(config.path)) : config.outputDir;
-    if (!fs.existsSync(basePath)) {
-      fs.mkdirSync(basePath, { recursive: true });
+    // Determine the physical base output directory based on config.path
+    const outputBaseDir = config.path ? path.join(config.outputDir, slugify(config.path)) : config.outputDir;
+    if (outputBaseDir !== config.outputDir && !fs.existsSync(outputBaseDir)) {
+      fs.mkdirSync(outputBaseDir, { recursive: true });
     }
+     // Logical base path for root-level content URLs
+    const rootUrlBasePath = `/`; // URLs start from here relative to site root
+
 
     // Generate individual pages
     for (const item of allItems) {
-      const itemSlug = item.slug || slugify(item.title || 'untitled');
-      generateHTML('single', item, path.join(basePath, `${itemSlug}.html`));
+        const itemSlug = item.slug || slugify(item.title || 'untitled');
+        // Output path is still itemSlug.html within the base directory
+        const outputPath = path.join(outputBaseDir, `${itemSlug}.html`);
+        // Pass item data along with potential metadata
+        generateHTML('single', { ...item, site: { baseUrl: siteBasePath } }, outputPath);
     }
 
-    // Generate paginated list pages
+
+    // Generate paginated list pages (e.g., home page, /page/2, etc.)
     if (config.pagination) {
       const itemsPerPage = config.pagination.itemsPerPage;
       const totalPages = Math.ceil(allItems.length / itemsPerPage);
-      const filenamePattern = config.pagination.filenamePattern || 'page-*.html';
+      // Use a pattern like "page-*" for generateUrl logic
+      const filenamePattern = (config.pagination.filenamePattern || 'page-*').replace('.html','');
 
       for (let page = 1; page <= totalPages; page++) {
         const pageItems = allItems.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-        const paginationHTML = getPaginationHTML(page, totalPages, filenamePattern);
+        // Generate pagination using the root base path
+        const paginationHTML = getPaginationHTML(page, totalPages, rootUrlBasePath, filenamePattern);
+
+        // Determine physical output path
         const outputPath = path.join(
-          basePath,
-          page === 1 ? '/' : filenamePattern.replace('*', page)
+          outputBaseDir,
+          // Page 1 goes to index.html
+          // Others go to page-N.html
+          page === 1 ? 'index.html' : `${filenamePattern.replace('*', page)}.html`
         );
-        generateHTML('list', { items: pageItems }, outputPath, paginationHTML);
+        generateHTML('list', {
+             items: pageItems,
+             currentPage: page,
+             totalPages: totalPages,
+             site: { baseUrl: siteBasePath }
+            }, outputPath, paginationHTML);
       }
     } else {
-      generateHTML('list', { items: allItems }, path.join(basePath, '/'));
+      // No pagination: Generate single list page at index.html
+      generateHTML('list', { items: allItems, site: { baseUrl: siteBasePath } }, path.join(outputBaseDir, 'index.html'));
     }
 
-    // Process taxonomies
-    await processTaxonomies(allItems, basePath);
+    // Process taxonomies, passing the physical output base directory
+    await processTaxonomies(allItems, outputBaseDir);
 
     console.log('Site generation complete!');
   } catch (error) {
