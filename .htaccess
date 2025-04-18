@@ -1,8 +1,0 @@
-<IfModule mod_mime.c>
-  AddType text/html .html
-</IfModule>
-
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteRule ^w/games/?$ /w/games/index.html [L]
-</IfModule>
