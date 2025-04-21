@@ -1,6 +1,6 @@
 <div class="pagination">
   ${currentPage > 1 ? `
-    <a href="${currentPage === 2 ? '/' : filenamePattern.replace('*', currentPage - 1)}" class="prev">‹ Prev</a>
+    <a href="${currentPage === 2 ? 'index.html' : filenamePattern.replace('*', currentPage - 1)}" class="prev">‹ Prev</a>
   ` : ''}
 
   <!-- Always show first page -->
