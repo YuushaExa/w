@@ -24,7 +24,7 @@
     ${page === currentPage ? `
       <span class="current">${page}</span>
     ` : `
-      <a href="${page === 1 ? '.html' : filenamePattern.replace('*', page)}">${page}</a>
+      <a href="${page === 1 ? 'index.html' : filenamePattern.replace('*', page)}">${page}</a>
     `}
   `).join('')}
 
