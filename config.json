@@ -3,7 +3,7 @@
   "data": [
       "https://raw.githubusercontent.com/YuushaExa/testapi/refs/heads/main/merged.json"
   ],
-  "path": "games",
+  "path": "/",
   "taxonomies": [
     "developers"
   ],
