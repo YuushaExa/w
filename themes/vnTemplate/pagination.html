@@ -1,6 +1,6 @@
 <div class="pagination">
   ${currentPage > 1 ? `
-    <a href="${currentPage === 2 ? '' : (currentPage - 1) + '/'}" class="prev">‹ Prev</a>
+    <a href="${currentPage === 2 ? '' : 'page-' + (currentPage - 1) + '/'}" class="prev">‹ Prev</a>
   ` : ''}
 
   <!-- Always show first page if not in current range -->
@@ -26,18 +26,18 @@
     ${page === currentPage ? `
       <span class="current">${page}</span>
     ` : `
-      <a href="${page === 1 ? '' : page + '/'}">${page}</a>
+      <a href="${page === 1 ? '' : 'page-' + page + '/'}">${page}</a>
     `}
   `).join('')}
 
   <!-- Always show last page if not in current range -->
   ${currentPage < totalPages - 3 ? `
     ${currentPage < totalPages - 4 ? `<span class="ellipsis">…</span>` : ''}
-    <a href="${totalPages + '/'}">${totalPages}</a>
+    <a href="page-${totalPages}/">${totalPages}</a>
   ` : ''}
 
   ${currentPage < totalPages ? `
-    <a href="${currentPage + 1 + '/'}" class="next">Next ›</a>
+    <a href="page-${currentPage + 1}/" class="next">Next ›</a>
   ` : ''}
 </div>
 
