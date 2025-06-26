@@ -1,11 +1,11 @@
 <div class="pagination">
   ${currentPage > 1 ? `
-    <a href="${currentPage === 2 ? 'index.html' : filenamePattern.replace('*', currentPage - 1)}" class="prev">‹ Prev</a>
+    <a href="${currentPage === 2 ? '' : (currentPage - 1) + '/'}" class="prev">‹ Prev</a>
   ` : ''}
 
   <!-- Always show first page if not in current range -->
   ${currentPage > 4 ? `
-    <a href="index.html">1</a>
+    <a href="">1</a>
     ${currentPage > 5 ? `<span class="ellipsis">…</span>` : ''}
   ` : ''}
 
@@ -26,18 +26,18 @@
     ${page === currentPage ? `
       <span class="current">${page}</span>
     ` : `
-      <a href="${page === 1 ? 'index.html' : filenamePattern.replace('*', page)}">${page}</a>
+      <a href="${page === 1 ? '' : page + '/'}">${page}</a>
     `}
   `).join('')}
 
   <!-- Always show last page if not in current range -->
   ${currentPage < totalPages - 3 ? `
     ${currentPage < totalPages - 4 ? `<span class="ellipsis">…</span>` : ''}
-    <a href="${filenamePattern.replace('*', totalPages)}">${totalPages}</a>
+    <a href="${totalPages + '/'}">${totalPages}</a>
   ` : ''}
 
   ${currentPage < totalPages ? `
-    <a href="${filenamePattern.replace('*', currentPage + 1)}" class="next">Next ›</a>
+    <a href="${currentPage + 1 + '/'}" class="next">Next ›</a>
   ` : ''}
 </div>
 
