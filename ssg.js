@@ -225,9 +225,17 @@ async function generateSite() {
     }
 
     // Generate individual pages
-    for (const item of allItems) {
+  for (const item of allItems) {
       const itemSlug = item.slug || slugify(item.title || 'untitled');
-      generateHTML('single', item, path.join(basePath, `${itemSlug}.html`));
+      const itemDir = path.join(basePath, itemSlug); // e.g., output/w/super-mario
+
+      // Ensure the directory for the item exists
+      if (!fs.existsSync(itemDir)) {
+        fs.mkdirSync(itemDir, { recursive: true });
+      }
+
+      const outputPath = path.join(itemDir, 'index.html'); // e.g., output/w/super-mario/index.html
+      generateHTML('single', item, outputPath);
     }
 
 const notFoundTemplatePath = path.join('themes', config.template, '404.html');
