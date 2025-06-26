@@ -277,7 +277,9 @@ for (const item of allItems) {
   }
 }
 
-
+if (allItems.length > 3) {
+  console.log(`...and ${allItems.length - 3} more single pages`);
+}
 
 const notFoundTemplatePath = path.join('themes', config.template, '404.html');
 if (fs.existsSync(notFoundTemplatePath)) {
