@@ -123,12 +123,13 @@ function generateHTML(templateName, data, outputPath, pagination = '') {
 }
 
 // Process taxonomies with base path
+// Process taxonomies with base path
 async function processTaxonomies(allItems, basePath) {
   if (!config.taxonomies || !Array.isArray(config.taxonomies)) return;
 
   for (const taxonomy of config.taxonomies) {
     const taxonomySlug = slugify(taxonomy);
-    const taxonomyDir = path.join(basePath, taxonomySlug); // e.g., output/w/games
+    const taxonomyDir = path.join(basePath, taxonomySlug);
     
     if (!fs.existsSync(taxonomyDir)) {
       fs.mkdirSync(taxonomyDir, { recursive: true });
@@ -156,33 +157,27 @@ async function processTaxonomies(allItems, basePath) {
     // Generate term pages
     for (const [termSlug, termData] of termsMap) {
       const { name, items } = termData;
-      // ADDED: Define the specific directory for this term
-      const termDir = path.join(taxonomyDir, termSlug); // e.g., output/w/games/action
       
-      // ADDED: Ensure this new term directory exists
-      if (!fs.existsSync(termDir)) {
-        fs.mkdirSync(termDir, { recursive: true });
-      }
-
       if (config.pagination) {
         const itemsPerPage = config.pagination.itemsPerPage;
         const totalPages = Math.ceil(items.length / itemsPerPage);
-        // CHANGED: The filename pattern is now relative to the term's directory
         const filenamePattern = config.pagination.filenamePattern || 'page-*.html';
 
         for (let page = 1; page <= totalPages; page++) {
           const pageItems = items.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-          // Pass the simpler pattern. The template will build relative links.
-          const paginationHTML = getPaginationHTML(page, totalPages, filenamePattern);
+          // Create a custom filename pattern that includes the term slug
+          const termFilenamePattern = `${termSlug}/page-*.html`;
+          const paginationHTML = getPaginationHTML(page, totalPages, termFilenamePattern);
           
-          // CHANGED: The output path logic is now simpler and uses the 'index.html' trick
           const outputPath = path.join(
-            termDir,
-            page === 1 ? 'index.html' : filenamePattern.replace('*', page)
+            taxonomyDir,
+            page === 1 ? `${termSlug}.html` : `${termSlug}/page-${page}.html`
           );
           
-          // The old directory creation logic for pagination is no longer needed, 
-          // as we create the main `termDir` above.
+          // Ensure the term directory exists for paginated pages
+          if (page > 1 && !fs.existsSync(path.join(taxonomyDir, termSlug))) {
+            fs.mkdirSync(path.join(taxonomyDir, termSlug), { recursive: true });
+          }
           
           generateHTML('taxonomy', { 
             items: pageItems, 
@@ -191,20 +186,18 @@ async function processTaxonomies(allItems, basePath) {
           }, outputPath, paginationHTML);
         }
       } else {
-        // CHANGED: Create the term page as 'index.html' inside its own folder
-        const outputPath = path.join(termDir, 'index.html');
         generateHTML('taxonomy', { 
           items: items, 
           term: name,
           taxonomy: taxonomy 
-        }, outputPath);
+        }, path.join(taxonomyDir, `${termSlug}.html`));
       }
     }
 
-    // Generate terms list page (This part was already correct)
+    // Generate terms list page
     const termsList = Array.from(termsMap.entries()).map(([slug, termData]) => ({
       name: termData.name,
-      slug: slug, // The slug will correctly link to the new directory, e.g., "action"
+      slug: slug,
       count: termData.items.length
     }));
 
@@ -232,17 +225,9 @@ async function generateSite() {
     }
 
     // Generate individual pages
-      for (const item of allItems) {
+    for (const item of allItems) {
       const itemSlug = item.slug || slugify(item.title || 'untitled');
-      const itemDir = path.join(basePath, itemSlug); // e.g., output/w/super-mario
-
-      // Ensure the directory for the item exists
-      if (!fs.existsSync(itemDir)) {
-        fs.mkdirSync(itemDir, { recursive: true });
-      }
-
-      const outputPath = path.join(itemDir, 'index.html'); // e.g., output/w/super-mario/index.html
-      generateHTML('single', item, outputPath);
+      generateHTML('single', item, path.join(basePath, `${itemSlug}.html`));
     }
 
 const notFoundTemplatePath = path.join('themes', config.template, '404.html');
