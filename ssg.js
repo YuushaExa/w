@@ -123,7 +123,6 @@ function generateHTML(templateName, data, outputPath, pagination = '') {
 }
 
 // Process taxonomies with base path
-// Process taxonomies with base path
 async function processTaxonomies(allItems, basePath) {
   if (!config.taxonomies || !Array.isArray(config.taxonomies)) return;
 
@@ -137,8 +136,16 @@ async function processTaxonomies(allItems, basePath) {
 
     const termsMap = new Map();
 
+    // Update item URLs in the taxonomy mapping to use the new structure
     for (const item of allItems) {
       if (item[taxonomy] && Array.isArray(item[taxonomy])) {
+        const itemSlug = item.slug || slugify(item.title || 'untitled');
+        // Create the item with the new URL structure
+        const itemWithPrettyUrl = {
+          ...item,
+          url: `/${path.join(slugify(config.path || ''), itemSlug)}/` // e.g., /w/super-mario/
+        };
+
         for (const term of item[taxonomy]) {
           const termName = term.name || term;
           const termSlug = slugify(termName);
@@ -149,11 +156,12 @@ async function processTaxonomies(allItems, basePath) {
               items: []
             });
           }
-          termsMap.get(termSlug).items.push(item);
+          termsMap.get(termSlug).items.push(itemWithPrettyUrl);
         }
       }
     }
 
+    // Rest of the function remains the same...
     // Generate term pages
     for (const [termSlug, termData] of termsMap) {
       const { name, items } = termData;
@@ -161,22 +169,22 @@ async function processTaxonomies(allItems, basePath) {
       if (config.pagination) {
         const itemsPerPage = config.pagination.itemsPerPage;
         const totalPages = Math.ceil(items.length / itemsPerPage);
-        const filenamePattern = config.pagination.filenamePattern || 'page-*.html';
+        const filenamePattern = config.pagination.filenamePattern || 'page-*/index.html';
 
         for (let page = 1; page <= totalPages; page++) {
           const pageItems = items.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-          // Create a custom filename pattern that includes the term slug
-          const termFilenamePattern = `${termSlug}/page-*.html`;
+          const termFilenamePattern = `${termSlug}/page-*/index.html`;
           const paginationHTML = getPaginationHTML(page, totalPages, termFilenamePattern);
           
           const outputPath = path.join(
             taxonomyDir,
-            page === 1 ? `${termSlug}.html` : `${termSlug}/page-${page}.html`
+            page === 1 ? `${termSlug}/index.html` : `${termSlug}/page-${page}/index.html`
           );
           
-          // Ensure the term directory exists for paginated pages
-          if (page > 1 && !fs.existsSync(path.join(taxonomyDir, termSlug))) {
-            fs.mkdirSync(path.join(taxonomyDir, termSlug), { recursive: true });
+          // Ensure the directories exist
+          const outputDir = path.dirname(outputPath);
+          if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir, { recursive: true });
           }
           
           generateHTML('taxonomy', { 
@@ -186,11 +194,17 @@ async function processTaxonomies(allItems, basePath) {
           }, outputPath, paginationHTML);
         }
       } else {
+        const outputPath = path.join(taxonomyDir, `${termSlug}/index.html`);
+        const outputDir = path.dirname(outputPath);
+        if (!fs.existsSync(outputDir)) {
+          fs.mkdirSync(outputDir, { recursive: true });
+        }
+        
         generateHTML('taxonomy', { 
           items: items, 
           term: name,
           taxonomy: taxonomy 
-        }, path.join(taxonomyDir, `${termSlug}.html`));
+        }, outputPath);
       }
     }
 
@@ -198,7 +212,8 @@ async function processTaxonomies(allItems, basePath) {
     const termsList = Array.from(termsMap.entries()).map(([slug, termData]) => ({
       name: termData.name,
       slug: slug,
-      count: termData.items.length
+      count: termData.items.length,
+      url: `/${path.join(slugify(config.path || ''), taxonomySlug, slug)}/`
     }));
 
     generateHTML('terms', { 
