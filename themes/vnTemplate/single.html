@@ -6,7 +6,7 @@
     ${data.developers?.length ? `
       <p><strong>Developers:</strong> 
         ${data.developers.map(dev => `
-          <a href="/developers/${dev.name.toLowerCase().replace(/\s+/g, '-')}">${dev.name}</a>
+          <a href="/w/games/developers/${dev.name.toLowerCase().replace(/\s+/g, '-')}">${dev.name}</a>
         `).join(', ')}
       </p>
     ` : ''}
