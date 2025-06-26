@@ -119,7 +119,6 @@ function generateHTML(templateName, data, outputPath, pagination = '') {
   )({ ...context, content });
 
   fs.writeFileSync(outputPath, fullHTML);
-  console.log(`Generated: ${outputPath}`);
 }
 
 // Process taxonomies with base path
@@ -260,10 +259,7 @@ for (const item of allItems) {
   }
 }
 
-// Show a summary if there are more pages
-if (allItems.length > 3) {
-  console.log(`...and ${allItems.length - 3} more single pages`);
-}
+
 
 const notFoundTemplatePath = path.join('themes', config.template, '404.html');
 if (fs.existsSync(notFoundTemplatePath)) {
