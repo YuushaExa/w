@@ -122,6 +122,7 @@ function generateHTML(templateName, data, outputPath, pagination = '') {
 }
 
 // Process taxonomies with base path
+// Process taxonomies with base path
 async function processTaxonomies(allItems, basePath) {
   if (!config.taxonomies || !Array.isArray(config.taxonomies)) return;
 
@@ -134,15 +135,14 @@ async function processTaxonomies(allItems, basePath) {
     }
 
     const termsMap = new Map();
+    let loggedTaxonomyPages = 0; // Counter for logged taxonomy pages
 
-    // Update item URLs in the taxonomy mapping to use the new structure
     for (const item of allItems) {
       if (item[taxonomy] && Array.isArray(item[taxonomy])) {
         const itemSlug = item.slug || slugify(item.title || 'untitled');
-        // Create the item with the new URL structure
         const itemWithPrettyUrl = {
           ...item,
-          url: `/${path.join(slugify(config.path || ''), itemSlug)}/` // e.g., /w/super-mario/
+          url: `/${path.join(slugify(config.path || ''), itemSlug)}/`
         };
 
         for (const term of item[taxonomy]) {
@@ -160,7 +160,6 @@ async function processTaxonomies(allItems, basePath) {
       }
     }
 
-    // Rest of the function remains the same...
     // Generate term pages
     for (const [termSlug, termData] of termsMap) {
       const { name, items } = termData;
@@ -180,10 +179,8 @@ async function processTaxonomies(allItems, basePath) {
             page === 1 ? `${termSlug}/index.html` : `${termSlug}/page-${page}/index.html`
           );
           
-          // Ensure the directories exist
-          const outputDir = path.dirname(outputPath);
-          if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
+          if (!fs.existsSync(path.dirname(outputPath))) {
+            fs.mkdirSync(path.dirname(outputPath), { recursive: true });
           }
           
           generateHTML('taxonomy', { 
@@ -191,12 +188,17 @@ async function processTaxonomies(allItems, basePath) {
             term: name,
             taxonomy: taxonomy 
           }, outputPath, paginationHTML);
+
+          // Only log first 3 taxonomy pages
+          if (loggedTaxonomyPages < 3) {
+            console.log(`Generated taxonomy page: ${outputPath}`);
+            loggedTaxonomyPages++;
+          }
         }
       } else {
         const outputPath = path.join(taxonomyDir, `${termSlug}/index.html`);
-        const outputDir = path.dirname(outputPath);
-        if (!fs.existsSync(outputDir)) {
-          fs.mkdirSync(outputDir, { recursive: true });
+        if (!fs.existsSync(path.dirname(outputPath))) {
+          fs.mkdirSync(path.dirname(outputPath), { recursive: true });
         }
         
         generateHTML('taxonomy', { 
@@ -204,7 +206,22 @@ async function processTaxonomies(allItems, basePath) {
           term: name,
           taxonomy: taxonomy 
         }, outputPath);
+
+        // Only log first 3 taxonomy pages
+        if (loggedTaxonomyPages < 3) {
+          console.log(`Generated taxonomy page: ${outputPath}`);
+          loggedTaxonomyPages++;
+        }
       }
+    }
+
+    // Show summary if there are more taxonomy pages
+    const totalTaxonomyPages = Array.from(termsMap.values()).reduce((total, termData) => {
+      return total + (config.pagination ? Math.ceil(termData.items.length / config.pagination.itemsPerPage) : 1);
+    }, 0);
+    
+    if (totalTaxonomyPages > 3) {
+      console.log(`...and ${totalTaxonomyPages - 3} more taxonomy pages for ${taxonomy}`);
     }
 
     // Generate terms list page
@@ -219,9 +236,10 @@ async function processTaxonomies(allItems, basePath) {
       terms: termsList,
       taxonomy: taxonomy 
     }, path.join(taxonomyDir, 'index.html'));
+    
+    console.log(`Generated taxonomy index: ${path.join(taxonomyDir, 'index.html')}`);
   }
 }
-
 // Main generation function
 async function generateSite() {
   try {
