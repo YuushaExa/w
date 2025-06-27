@@ -1,5 +1,4 @@
 <div class="pagination">
-  <script>
 function getPaginationHTML(currentPage, totalPages, basePath = '') {
   // Ensure basePath ends with a slash
   if (basePath && !basePath.endsWith('/')) {
@@ -12,56 +11,53 @@ function getPaginationHTML(currentPage, totalPages, basePath = '') {
   // Helper function to generate page URL
   const getPageUrl = (page) => {
     if (page === 1) return basePath;
-    return `${basePath}page-${page}`;
+    return `${basePath}page-${page}/`;
   };
 
-  let paginationHTML = `
-    <div class="pagination">
-      ${currentPage > 1 ? `
-        <a href="${getPageUrl(currentPage - 1)}" class="prev">‹ Prev</a>
-      ` : ''}
-  `;
+  let html = '<div class="pagination">';
 
-  // Always show first page if not in current range
-  if (currentPage > 4) {
-    paginationHTML += `
-      <a href="${getPageUrl(1)}">1</a>
-      ${currentPage > 5 ? `<span class="ellipsis">…</span>` : ''}
-    `;
+  // Previous button
+  if (currentPage > 1) {
+    html += `<a href="${getPageUrl(currentPage - 1)}" class="prev">‹ Prev</a>`;
   }
 
-  // Show surrounding pages
+  // First page and ellipsis
+  if (currentPage > 4) {
+    html += `<a href="${getPageUrl(1)}">1</a>`;
+    if (currentPage > 5) {
+      html += '<span class="ellipsis">…</span>';
+    }
+  }
+
+  // Page numbers
   const startPage = Math.max(1, Math.min(currentPage - 3, totalPages - 6));
   const endPage = Math.min(totalPages, startPage + 6);
 
   for (let page = startPage; page <= endPage; page++) {
-    paginationHTML += page === currentPage ? `
-      <span class="current">${page}</span>
-    ` : `
-      <a href="${getPageUrl(page)}">${page}</a>
-    `;
+    if (page === currentPage) {
+      html += `<span class="current">${page}</span>`;
+    } else {
+      html += `<a href="${getPageUrl(page)}">${page}</a>`;
+    }
   }
 
-  // Always show last page if not in current range
+  // Last page and ellipsis
   if (currentPage < totalPages - 3) {
-    paginationHTML += `
-      ${currentPage < totalPages - 4 ? `<span class="ellipsis">…</span>` : ''}
-      <a href="${getPageUrl(totalPages)}">${totalPages}</a>
-    `;
+    if (currentPage < totalPages - 4) {
+      html += '<span class="ellipsis">…</span>';
+    }
+    html += `<a href="${getPageUrl(totalPages)}">${totalPages}</a>`;
   }
 
   // Next button
   if (currentPage < totalPages) {
-    paginationHTML += `
-      <a href="${getPageUrl(currentPage + 1)}" class="next">Next ›</a>
-    `;
+    html += `<a href="${getPageUrl(currentPage + 1)}" class="next">Next ›</a>`;
   }
 
-  paginationHTML += `</div>`;
+  html += '</div>';
 
-  return paginationHTML;
+  return html;
 }
-  </script>
 </div>
 <style>
   .pagination {
