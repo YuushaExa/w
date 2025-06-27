@@ -1,6 +1,6 @@
 <div class="pagination">
   ${currentPage > 1 ? `
-    <a href="/${currentPage === 2 ? 'index.html' : filenamePattern.replace('*', currentPage - 1)}" class="prev">‹ Prev</a>
+    <a href="/w/games/developers/${currentPage === 2 ? 'index.html' : filenamePattern.replace('*', currentPage - 1)}" class="prev">‹ Prev</a>
   ` : ''}
 
   <!-- Always show first page -->
@@ -24,18 +24,18 @@
     ${page === currentPage ? `
       <span class="current">${page}</span>
     ` : `
-      <a href="/${page === 1 ? 'index.html' : filenamePattern.replace('*', page)}">${page}</a>
+      <a href="/w/games/developers/${page === 1 ? 'index.html' : filenamePattern.replace('*', page)}">${page}</a>
     `}
   `).join('')}
 
   <!-- Always show last page -->
   ${currentPage < totalPages - 3 ? `
     ${currentPage < totalPages - 4 ? `<span class="ellipsis">…</span>` : ''}
-    <a href="/w/developers/${filenamePattern.replace('*', totalPages)}">${totalPages}</a>
+    <a href="/w/games/developers/${filenamePattern.replace('*', totalPages)}">${totalPages}</a>
   ` : ''}
 
   ${currentPage < totalPages ? `
-    <a href="/${filenamePattern.replace('*', currentPage + 1)}" class="next">Next ›</a>
+    <a href="/w/games/developers/${filenamePattern.replace('*', currentPage + 1)}" class="next">Next ›</a>
   ` : ''}
 </div>
 <style>
