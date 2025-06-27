@@ -31,7 +31,7 @@
   <!-- Always show last page -->
   ${currentPage < totalPages - 3 ? `
     ${currentPage < totalPages - 4 ? `<span class="ellipsis">…</span>` : ''}
-    <a href="/${filenamePattern.replace('*', totalPages)}">${totalPages}</a>
+    <a href="/w/developers/${filenamePattern.replace('*', totalPages)}">${totalPages}</a>
   ` : ''}
 
   ${currentPage < totalPages ? `
