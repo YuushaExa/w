@@ -1,4 +1,5 @@
 <div class="pagination">
+  <script>
 function getPaginationHTML(currentPage, totalPages, basePath = '') {
   // Ensure basePath ends with a slash
   if (basePath && !basePath.endsWith('/')) {
@@ -60,6 +61,7 @@ function getPaginationHTML(currentPage, totalPages, basePath = '') {
 
   return paginationHTML;
 }
+  </script>
 </div>
 <style>
   .pagination {
