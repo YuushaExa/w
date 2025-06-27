@@ -1,42 +1,65 @@
 <div class="pagination">
-  ${currentPage > 1 ? `
-    <a href="${currentPage === 2 ? 'index.html' : filenamePattern.replace('*', currentPage - 1)}" class="prev">‹ Prev</a>
-  ` : ''}
+function getPaginationHTML(currentPage, totalPages, basePath = '') {
+  // Ensure basePath ends with a slash
+  if (basePath && !basePath.endsWith('/')) {
+    basePath += '/';
+  }
 
-  <!-- Always show first page -->
-  ${currentPage > 4 ? `
-    <a href="index.html">1</a>
-    ${currentPage > 5 ? `<span class="ellipsis">…</span>` : ''}
-  ` : ''}
+  // Don't show pagination if only 1 page
+  if (totalPages <= 1) return '';
 
-  <!-- Show surrounding pages -->
-  ${Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
-    let page;
-    if (currentPage <= 4) {
-      page = i + 1;
-    } else if (currentPage >= totalPages - 3) {
-      page = totalPages - 6 + i;
-    } else {
-      page = currentPage - 3 + i;
-    }
-    return page;
-  }).filter(page => page >= 1 && page <= totalPages).map(page => `
-    ${page === currentPage ? `
+  // Helper function to generate page URL
+  const getPageUrl = (page) => {
+    if (page === 1) return basePath;
+    return `${basePath}page-${page}`;
+  };
+
+  let paginationHTML = `
+    <div class="pagination">
+      ${currentPage > 1 ? `
+        <a href="${getPageUrl(currentPage - 1)}" class="prev">‹ Prev</a>
+      ` : ''}
+  `;
+
+  // Always show first page if not in current range
+  if (currentPage > 4) {
+    paginationHTML += `
+      <a href="${getPageUrl(1)}">1</a>
+      ${currentPage > 5 ? `<span class="ellipsis">…</span>` : ''}
+    `;
+  }
+
+  // Show surrounding pages
+  const startPage = Math.max(1, Math.min(currentPage - 3, totalPages - 6));
+  const endPage = Math.min(totalPages, startPage + 6);
+
+  for (let page = startPage; page <= endPage; page++) {
+    paginationHTML += page === currentPage ? `
       <span class="current">${page}</span>
     ` : `
-      <a href="${page === 1 ? 'index.html' : filenamePattern.replace('*', page)}">${page}</a>
-    `}
-  `).join('')}
+      <a href="${getPageUrl(page)}">${page}</a>
+    `;
+  }
 
-  <!-- Always show last page -->
-  ${currentPage < totalPages - 3 ? `
-    ${currentPage < totalPages - 4 ? `<span class="ellipsis">…</span>` : ''}
-    <a href="${filenamePattern.replace('*', totalPages)}">${totalPages}</a>
-  ` : ''}
+  // Always show last page if not in current range
+  if (currentPage < totalPages - 3) {
+    paginationHTML += `
+      ${currentPage < totalPages - 4 ? `<span class="ellipsis">…</span>` : ''}
+      <a href="${getPageUrl(totalPages)}">${totalPages}</a>
+    `;
+  }
 
-  ${currentPage < totalPages ? `
-    <a href="${filenamePattern.replace('*', currentPage + 1)}" class="next">Next ›</a>
-  ` : ''}
+  // Next button
+  if (currentPage < totalPages) {
+    paginationHTML += `
+      <a href="${getPageUrl(currentPage + 1)}" class="next">Next ›</a>
+    `;
+  }
+
+  paginationHTML += `</div>`;
+
+  return paginationHTML;
+}
 </div>
 <style>
   .pagination {
