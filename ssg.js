@@ -86,15 +86,15 @@ async function fetchData(url) {
 }
 
 // Generate pagination HTML
-function getPaginationHTML(currentPage, totalPages, filenamePattern) {
+function getPaginationHTML(currentPage, totalPages, filenamePattern, basePath = '') {
   return new Function(
     'currentPage', 
     'totalPages',
     'filenamePattern',
+    'basePath',
     `return \`${templates.pagination}\``
-  )(currentPage, totalPages, filenamePattern);
+  )(currentPage, totalPages, filenamePattern, basePath);
 }
-
 // Generate HTML with template literals
 function generateHTML(templateName, data, outputPath, pagination = '') {
   const template = templates[templateName];
