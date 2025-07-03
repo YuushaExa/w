@@ -167,16 +167,16 @@ async function processTaxonomies(allItems, basePath) {
       if (config.pagination) {
         const itemsPerPage = config.pagination.itemsPerPage;
         const totalPages = Math.ceil(items.length / itemsPerPage);
-        const filenamePattern = config.pagination.filenamePattern || '*';
+        const filenamePattern = config.pagination.filenamePattern || 'page-*/index.html';
 
         for (let page = 1; page <= totalPages; page++) {
           const pageItems = items.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-          const termFilenamePattern = `${termSlug}/*`;
+          const termFilenamePattern = `${termSlug}/page-*/index.html`;
           const paginationHTML = getPaginationHTML(page, totalPages, termFilenamePattern);
           
           const outputPath = path.join(
             taxonomyDir,
-            page === 1 ? `${termSlug}/index.html` : `${termSlug}/${page}`
+            page === 1 ? `${termSlug}/index.html` : `${termSlug}/page-${page}/index.html`
           );
           
           if (!fs.existsSync(path.dirname(outputPath))) {
@@ -196,7 +196,7 @@ async function processTaxonomies(allItems, basePath) {
           }
         }
       } else {
-        const outputPath = path.join(taxonomyDir, `${termSlug}`);
+        const outputPath = path.join(taxonomyDir, `${termSlug}/index.html`);
         if (!fs.existsSync(path.dirname(outputPath))) {
           fs.mkdirSync(path.dirname(outputPath), { recursive: true });
         }
