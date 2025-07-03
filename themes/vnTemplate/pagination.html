@@ -1,9 +1,15 @@
 <div class="pagination">
   ${currentPage > 1 ? `
-    <a href="/${isTaxonomy ? `${basePath}/${currentPage === 2 ? '' : 'page-' + (currentPage - 1)}` : filenamePattern.replace('*', currentPage - 1)}" class="prev">‹ Prev</a>
+    <a href="/w/games/developers/${currentPage === 2 ? 'index.html' : filenamePattern.replace('*', currentPage - 1)}" class="prev">‹ Prev</a>
   ` : ''}
 
-  <!-- Page numbers -->
+  <!-- Always show first page -->
+  ${currentPage > 4 ? `
+    <a href="index.html">1</a>
+    ${currentPage > 5 ? `<span class="ellipsis">…</span>` : ''}
+  ` : ''}
+
+  <!-- Show surrounding pages -->
   ${Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
     let page;
     if (currentPage <= 4) {
@@ -18,12 +24,18 @@
     ${page === currentPage ? `
       <span class="current">${page}</span>
     ` : `
-      <a href="/${isTaxonomy ? `${basePath}/${page === 1 ? '' : 'page-' + page}` : filenamePattern.replace('*', page)}">${page}</a>
+      <a href="/w/games/developers/${page === 1 ? 'index.html' : filenamePattern.replace('*', page)}">${page}</a>
     `}
   `).join('')}
 
+  <!-- Always show last page -->
+  ${currentPage < totalPages - 3 ? `
+    ${currentPage < totalPages - 4 ? `<span class="ellipsis">…</span>` : ''}
+    <a href="/w/games/developers/${filenamePattern.replace('*', totalPages)}">${totalPages}</a>
+  ` : ''}
+
   ${currentPage < totalPages ? `
-    <a href="/${isTaxonomy ? `${basePath}/page-${currentPage + 1}` : filenamePattern.replace('*', currentPage + 1)}" class="next">Next ›</a>
+    <a href="/w/games/developers/${filenamePattern.replace('*', currentPage + 1)}" class="next">Next ›</a>
   ` : ''}
 </div>
 <style>
