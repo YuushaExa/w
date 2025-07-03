@@ -86,25 +86,13 @@ async function fetchData(url) {
 }
 
 // Generate pagination HTML
-function getPaginationHTML(currentPage, totalPages, basePath, isTaxonomy = false, termSlug = '') {
-  // For taxonomy pages, we need to adjust the path construction
-  if (isTaxonomy) {
-    return new Function(
-      'currentPage', 
-      'totalPages',
-      'basePath',
-      'termSlug',
-      `return \`${templates.pagination}\``
-    )(currentPage, totalPages, basePath, termSlug);
-  } else {
-    // Regular pagination logic
-    return new Function(
-      'currentPage', 
-      'totalPages',
-      'filenamePattern',
-      `return \`${templates.pagination}\``
-    )(currentPage, totalPages, basePath);
-  }
+function getPaginationHTML(currentPage, totalPages, filenamePattern) {
+  return new Function(
+    'currentPage', 
+    'totalPages',
+    'filenamePattern',
+    `return \`${templates.pagination}\``
+  )(currentPage, totalPages, filenamePattern);
 }
 
 // Generate HTML with template literals
@@ -176,24 +164,20 @@ async function processTaxonomies(allItems, basePath) {
     for (const [termSlug, termData] of termsMap) {
       const { name, items } = termData;
       
-if (config.pagination) {
-  const itemsPerPage = config.pagination.itemsPerPage;
-  const totalPages = Math.ceil(items.length / itemsPerPage);
-  
-  for (let page = 1; page <= totalPages; page++) {
-    const pageItems = items.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-    const paginationHTML = getPaginationHTML(
-      page, 
-      totalPages, 
-      `${taxonomySlug}/${termSlug}`, // Base path
-      true, // isTaxonomy flag
-      termSlug // term slug
-    );
-    
-    const outputPath = path.join(
-      taxonomyDir,
-      page === 1 ? `${termSlug}/index.html` : `${termSlug}/page-${page}/index.html`
-    );
+      if (config.pagination) {
+        const itemsPerPage = config.pagination.itemsPerPage;
+        const totalPages = Math.ceil(items.length / itemsPerPage);
+        const filenamePattern = config.pagination.filenamePattern || 'page-*/index.html';
+
+        for (let page = 1; page <= totalPages; page++) {
+          const pageItems = items.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+          const termFilenamePattern = `${termSlug}/page-*/index.html`;
+          const paginationHTML = getPaginationHTML(page, totalPages, termFilenamePattern);
+          
+          const outputPath = path.join(
+            taxonomyDir,
+            page === 1 ? `${termSlug}/index.html` : `${termSlug}/page-${page}/index.html`
+          );
           
           if (!fs.existsSync(path.dirname(outputPath))) {
             fs.mkdirSync(path.dirname(outputPath), { recursive: true });
